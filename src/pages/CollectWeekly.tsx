@@ -8,8 +8,8 @@ import type { House, IncomeEntry } from '../lib/types';
 /** Weekly subscription grid: houses × weeks, tap a cell to record payment. */
 export default function CollectWeekly() {
   const { t } = useTranslation();
-  const { currentProgramId, current, session, refreshFinance, frozen, can } = useApp();
-  const program = current?.programs;
+  const { currentProgramId, currentProgram, session, refreshFinance, frozen, can } = useApp();
+  const program = currentProgram;
   const [houses, setHouses] = useState<House[]>([]);
   const [paid, setPaid] = useState<Map<string, IncomeEntry>>(new Map());
   const [err, setErr] = useState<string | null>(null);

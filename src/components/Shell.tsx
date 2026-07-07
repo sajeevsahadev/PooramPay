@@ -15,9 +15,20 @@ const tabGlow: Record<string, string> = {
 
 export default function Shell() {
   const { t } = useTranslation();
-  const { current, memberships, currentProgramId, setCurrentProgramId, frozen, can, isPadmin } = useApp();
+  const { current, programOptions, currentProgramId, setCurrentProgramId, frozen, can, isPadmin } = useApp();
   const nav = useNavigate();
   const location = useLocation();
+
+  // platform admins see every program, grouped by organization
+  const orgGroups = (() => {
+    const g = new Map<string, typeof programOptions>();
+    for (const p of programOptions) {
+      const org = p.committees?.organizations?.name ?? '—';
+      if (!g.has(org)) g.set(org, []);
+      g.get(org)!.push(p);
+    }
+    return [...g.entries()];
+  })();
 
   const tabs = [
     { to: '/', key: 'home', show: true },
@@ -77,14 +88,20 @@ export default function Shell() {
               onChange={(e) => { setCurrentProgramId(e.target.value); nav('/'); }}
               className="flex-1 md:max-w-sm bg-transparent border-0 font-bold text-white focus:ring-0"
             >
-              {memberships.map((m) => (
-                <option key={m.program_id} value={m.program_id}>
-                  {m.programs?.name} {m.programs?.year}
-                </option>
-              ))}
+              {isPadmin && orgGroups.length > 1
+                ? orgGroups.map(([org, progs]) => (
+                    <optgroup key={org} label={org}>
+                      {progs.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name} {p.year}</option>
+                      ))}
+                    </optgroup>
+                  ))
+                : programOptions.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name} {p.year}</option>
+                  ))}
             </select>
             <span className="text-xs text-stone-500">
-              {current ? t(`roles.${current.role}`) : isPadmin ? 'Admin' : ''}
+              {isPadmin ? '🛡️ Admin' : current ? t(`roles.${current.role}`) : ''}
             </span>
           </div>
           {frozen && (

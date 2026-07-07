@@ -13,7 +13,7 @@ interface CashRow { date: string; created: string; label: string; inAmt: number;
 
 export default function Reports() {
   const { t, i18n } = useTranslation();
-  const { currentProgramId, finance, current } = useApp();
+  const { currentProgramId, finance, currentProgram } = useApp();
   const [tab, setTab] = useState<Tab>('pnl');
   const [incomeByType, setIncomeByType] = useState<Map<string, number>>(new Map());
   const [expenseByHead, setExpenseByHead] = useState<Map<string, number>>(new Map());
@@ -139,7 +139,7 @@ export default function Reports() {
       </div>
 
       <div className="hidden print:block mb-4">
-        <h2 className="font-bold text-lg">{current?.programs?.name} {current?.programs?.year} — {tabs.find((x) => x.id === tab)?.label}</h2>
+        <h2 className="font-bold text-lg">{currentProgram?.name} {currentProgram?.year} — {tabs.find((x) => x.id === tab)?.label}</h2>
       </div>
 
       {tab === 'pnl' && (

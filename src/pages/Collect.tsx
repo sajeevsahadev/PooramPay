@@ -4,8 +4,8 @@ import { useApp } from '../state/AppContext';
 
 export default function Collect() {
   const { t } = useTranslation();
-  const { can, current } = useApp();
-  const weekly = !!current?.programs?.weekly_amount;
+  const { can, currentProgram } = useApp();
+  const weekly = !!currentProgram?.weekly_amount;
 
   const items = [
     { to: '/collect/house', icon: '🏠', key: 'collect.house', tile: 'tile-lime', glow: 'rgba(163,230,53,.35)', show: true },
