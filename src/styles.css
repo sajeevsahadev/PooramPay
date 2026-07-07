@@ -1,61 +1,22 @@
 @import 'tailwindcss';
 
 /*
-  PooramPay "Night Festival" neon theme.
-  The standard palettes (stone/green/red/amber/blue) are REMAPPED to dark-mode
-  equivalents here, so page components keep using semantic classes like
-  text-stone-500 or bg-green-50 and automatically render correctly on the
-  dark neon background. If you add new UI, pick from the same palette names.
+  PooramPay professional theme.
+  Clean light surfaces, deep indigo primary, restrained accents.
+  Pages use semantic classes (stone scale, green/red/amber/blue tints) which
+  keep their standard Tailwind values here.
 */
 @theme {
-  /* brand: electric violet -> fuchsia */
-  --color-brand-50: #201549;
-  --color-brand-100: #2c1c62;
-  --color-brand-600: #a855f7;
-  --color-brand-700: #7c3aed;
-  --color-brand-800: #4c1d95;
-  --color-gold: #fbbf24;
+  /* brand: deep indigo — trustworthy, prints well */
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-gold: #b45309;
 
-  /* dark panels */
-  --color-surface: #171130;
-
-  /* inverted neutral scale (light text on dark) */
-  --color-stone-50: #1e173a;
-  --color-stone-100: #261d49;
-  --color-stone-200: #352a5e;
-  --color-stone-300: #473a76;
-  --color-stone-400: #8d80c9;
-  --color-stone-500: #a89ce0;
-  --color-stone-600: #c2b7f0;
-  --color-stone-700: #d9d1fa;
-  --color-stone-800: #ece7ff;
-  --color-stone-900: #f6f3ff;
-
-  /* neon-adjusted accents */
-  --color-green-50: #07281d;
-  --color-green-100: #0a3f2c;
-  --color-green-300: #0f766e;
-  --color-green-600: #10b981;
-  --color-green-700: #34d399;
-  --color-green-800: #6ee7b7;
-
-  --color-red-50: #330a1e;
-  --color-red-100: #4a0d27;
-  --color-red-200: #7f1d3f;
-  --color-red-300: #be123c;
-  --color-red-600: #f43f5e;
-  --color-red-700: #fb7185;
-  --color-red-800: #fda4af;
-
-  --color-amber-50: #2d1c05;
-  --color-amber-100: #3f2807;
-  --color-amber-300: #b45309;
-  --color-amber-800: #fcd34d;
-
-  --color-blue-50: #0d1b3f;
-  --color-blue-100: #13255c;
-  --color-blue-300: #2563eb;
-  --color-blue-800: #93c5fd;
+  /* panels */
+  --color-surface: #ffffff;
 }
 
 @layer base {
@@ -64,14 +25,8 @@
   }
 
   body {
-    @apply text-stone-800 antialiased;
+    @apply bg-stone-100 text-stone-800 antialiased;
     font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Malayalam', sans-serif;
-    background-color: #0a0618;
-    background-image:
-      radial-gradient(60rem 40rem at 15% -10%, rgb(124 58 237 / 0.22), transparent 60%),
-      radial-gradient(50rem 35rem at 110% 15%, rgb(34 211 238 / 0.10), transparent 55%),
-      radial-gradient(45rem 40rem at 50% 115%, rgb(217 70 239 / 0.12), transparent 55%);
-    background-attachment: fixed;
   }
 
   /* Big touch targets everywhere - collectors use this outdoors */
@@ -80,38 +35,22 @@
   }
 
   input, select, textarea {
-    @apply rounded-lg border border-stone-300 px-3 py-2 text-base w-full text-stone-800
+    @apply rounded-lg border border-stone-300 bg-white px-3 py-2 text-base w-full text-stone-800
       focus:outline-none focus:ring-2 focus:ring-brand-600 focus:border-brand-600;
-    background-color: #120c28;
   }
-  input::placeholder, textarea::placeholder { color: #6f63a8; }
-  select option { background-color: #171130; color: #ece7ff; }
 }
 
 @layer components {
   .btn, .btn-primary, .btn-secondary, .btn-danger {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 font-semibold
       text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer
-      active:scale-[0.98];
+      active:scale-[0.99];
   }
-  .btn-primary {
-    @apply text-white;
-    background-image: linear-gradient(135deg, #d946ef, #7c3aed);
-    box-shadow: 0 0 18px rgb(168 85 247 / 0.45);
-  }
-  .btn-primary:hover { filter: brightness(1.15); }
-  .btn-secondary { @apply bg-surface border border-stone-300 text-stone-700 hover:bg-stone-100; }
-  .btn-danger {
-    @apply text-white;
-    background-image: linear-gradient(135deg, #f43f5e, #be123c);
-    box-shadow: 0 0 16px rgb(244 63 94 / 0.4);
-  }
+  .btn-primary { @apply bg-brand-700 text-white hover:bg-brand-800 shadow-sm; }
+  .btn-secondary { @apply bg-white border border-stone-300 text-stone-700 hover:bg-stone-50; }
+  .btn-danger { @apply bg-red-600 text-white hover:bg-red-700 shadow-sm; }
 
-  .card {
-    @apply rounded-xl border border-stone-200 p-4;
-    background-image: linear-gradient(165deg, #1d1540, #140e2c 65%);
-    box-shadow: 0 4px 24px rgb(0 0 0 / 0.35);
-  }
+  .card { @apply bg-white rounded-xl border border-stone-200 p-4 shadow-sm; }
 
   .chip, .chip-green, .chip-amber, .chip-red, .chip-gray, .chip-blue {
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
@@ -124,52 +63,42 @@
 
   .money { font-variant-numeric: tabular-nums; }
 
-  /* neon stat cards (dashboard) */
-  .stat { @apply rounded-xl p-4 text-white border-0 relative overflow-hidden; }
-  .stat::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: radial-gradient(18rem 8rem at 90% -30%, rgb(255 255 255 / 0.18), transparent 60%);
-    pointer-events: none;
-  }
-  .stat-fuchsia { background-image: linear-gradient(135deg, #a21caf, #6d28d9); box-shadow: 0 0 26px rgb(217 70 239 / 0.35); }
-  .stat-cyan { background-image: linear-gradient(135deg, #0e7490, #1e40af); box-shadow: 0 0 26px rgb(34 211 238 / 0.3); }
-  .stat-green { background-image: linear-gradient(135deg, #047857, #064e3b); box-shadow: 0 0 22px rgb(52 211 153 / 0.28); }
-  .stat-red { background-image: linear-gradient(135deg, #be123c, #6b2136); box-shadow: 0 0 22px rgb(251 113 133 / 0.28); }
+  /* dashboard stat cards: white with a colored accent bar and colored value */
+  .stat { @apply bg-white rounded-xl border border-stone-200 p-4 shadow-sm relative overflow-hidden; }
+  .stat::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+  .stat .stat-label { @apply text-xs uppercase tracking-wide text-stone-500; }
+  .stat-fuchsia::before { background: #4338ca; }
+  .stat-fuchsia .stat-value { color: #3730a3; }
+  .stat-cyan::before { background: #0369a1; }
+  .stat-cyan .stat-value { color: #075985; }
+  .stat-green::before { background: #15803d; }
+  .stat-green .stat-value { color: #166534; }
+  .stat-red::before { background: #b91c1c; }
+  .stat-red .stat-value { color: #991b1b; }
 
-  /* vibrant icon tiles */
-  .tile { @apply w-11 h-11 min-h-0 rounded-xl flex items-center justify-center text-2xl shrink-0; }
-  .tile-fuchsia { background-image: linear-gradient(135deg, #c026d3, #7c3aed); box-shadow: 0 0 14px rgb(217 70 239 / 0.5); }
-  .tile-cyan { background-image: linear-gradient(135deg, #06b6d4, #2563eb); box-shadow: 0 0 14px rgb(34 211 238 / 0.5); }
-  .tile-lime { background-image: linear-gradient(135deg, #65a30d, #059669); box-shadow: 0 0 14px rgb(163 230 53 / 0.45); }
-  .tile-amber { background-image: linear-gradient(135deg, #f59e0b, #ea580c); box-shadow: 0 0 14px rgb(251 191 36 / 0.5); }
-  .tile-violet { background-image: linear-gradient(135deg, #8b5cf6, #4f46e5); box-shadow: 0 0 14px rgb(139 92 246 / 0.5); }
-  .tile-rose { background-image: linear-gradient(135deg, #f43f5e, #9f1239); box-shadow: 0 0 14px rgb(244 63 94 / 0.5); }
+  /* icon tiles: soft tints, no glow */
+  .tile { @apply w-11 h-11 min-h-0 rounded-xl flex items-center justify-center text-2xl shrink-0 border; }
+  .tile-fuchsia { @apply bg-brand-50 border-brand-100; }
+  .tile-cyan { @apply bg-sky-50 border-sky-100; }
+  .tile-lime { @apply bg-green-50 border-green-100; }
+  .tile-amber { @apply bg-amber-50 border-amber-100; }
+  .tile-violet { @apply bg-indigo-50 border-indigo-100; }
+  .tile-rose { @apply bg-rose-50 border-rose-100; }
 
-  .glow-text { text-shadow: 0 0 14px rgb(217 70 239 / 0.65); }
+  .bar-track { @apply h-2 rounded-full overflow-hidden bg-stone-200; }
+  .bar-fill { height: 100%; border-radius: 9999px; background: #4338ca; }
+  .bar-fill-green { height: 100%; border-radius: 9999px; background: #15803d; }
+  .bar-fill-red { height: 100%; border-radius: 9999px; background: #dc2626; }
 
-  .bar-track { @apply h-2 rounded-full overflow-hidden bg-stone-100; }
-  .bar-fill { height: 100%; border-radius: 9999px; background-image: linear-gradient(90deg, #22d3ee, #a855f7, #e879f9); }
-  .bar-fill-green { height: 100%; border-radius: 9999px; background-image: linear-gradient(90deg, #34d399, #a3e635); }
-  .bar-fill-red { height: 100%; border-radius: 9999px; background-image: linear-gradient(90deg, #fb7185, #f43f5e); }
-
-  .page-enter { animation: fadeUp 0.35s ease both; }
-  .float-blob { position: absolute; border-radius: 9999px; filter: blur(70px); opacity: 0.55; animation: floaty 9s ease-in-out infinite; pointer-events: none; }
+  .page-enter { animation: fadeUp 0.25s ease both; }
 }
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
-@keyframes floaty {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-24px) scale(1.06); }
-}
 
-/* Reports must print on paper: force a light scheme */
 @media print {
-  body { background: #fff !important; color: #000 !important; }
-  .card { background: #fff !important; border-color: #ccc !important; box-shadow: none !important; }
-  * { color: #000 !important; text-shadow: none !important; box-shadow: none !important; }
-  .money { color: #000 !important; }
+  body { background: #fff !important; }
+  .card, .stat { box-shadow: none !important; }
 }

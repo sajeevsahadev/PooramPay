@@ -29,8 +29,7 @@ export default function More() {
   return (
     <div className="max-w-lg mx-auto">
       <div className="card mb-4 flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full text-white flex items-center justify-center text-xl font-bold shrink-0"
-          style={{ background: 'linear-gradient(135deg,#d946ef,#7c3aed)', boxShadow: '0 0 14px rgba(217,70,239,.5)' }}>
+        <div className="w-12 h-12 rounded-full bg-brand-700 text-white flex items-center justify-center text-xl font-bold shrink-0">
           {(profile?.full_name ?? '?')[0]}
         </div>
         <div className="min-w-0">

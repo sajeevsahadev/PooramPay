@@ -122,20 +122,20 @@ export default function Dashboard() {
       {showMoney && (
         <div className="grid grid-cols-2 gap-3">
           <div className="stat stat-fuchsia">
-            <div className="text-xs uppercase tracking-wide opacity-80">💵 {t('dashboard.cashInHand')}</div>
-            <div className="text-2xl font-black money">{fmtINR(finance?.cash_balance)}</div>
+            <div className="stat-label">💵 {t('dashboard.cashInHand')}</div>
+            <div className="stat-value text-2xl font-black money">{fmtINR(finance?.cash_balance)}</div>
           </div>
           <div className="stat stat-cyan">
-            <div className="text-xs uppercase tracking-wide opacity-80">🏦 {t('dashboard.bankBalance')}</div>
-            <div className="text-2xl font-black money">{fmtINR(finance?.bank_balance)}</div>
+            <div className="stat-label">🏦 {t('dashboard.bankBalance')}</div>
+            <div className="stat-value text-2xl font-black money">{fmtINR(finance?.bank_balance)}</div>
           </div>
           <div className="stat stat-green">
-            <div className="text-xs uppercase tracking-wide opacity-80">📈 {t('dashboard.collected')}</div>
-            <div className="text-xl font-black money">{fmtINR(finance?.income_total)}</div>
+            <div className="stat-label">📈 {t('dashboard.collected')}</div>
+            <div className="stat-value text-xl font-black money">{fmtINR(finance?.income_total)}</div>
           </div>
           <div className="stat stat-red">
-            <div className="text-xs uppercase tracking-wide opacity-80">📉 {t('dashboard.spent')}</div>
-            <div className="text-xl font-black money">{fmtINR(finance?.expense_total)}</div>
+            <div className="stat-label">📉 {t('dashboard.spent')}</div>
+            <div className="stat-value text-xl font-black money">{fmtINR(finance?.expense_total)}</div>
           </div>
         </div>
       )}

@@ -112,8 +112,8 @@ export default function CollectWeekly() {
                   <button key={w} onClick={() => markPaid(house, w)}
                     disabled={isPaid || frozen || busyCell === key}
                     title={`${t('collect.weekN', { n: w })}`}
-                    className={`h-9 rounded text-[11px] font-semibold transition-all ${
-                      isPaid ? 'bg-green-600 text-white shadow-[0_0_8px_rgba(52,211,153,.55)]'
+                    className={`h-9 rounded text-[11px] font-semibold transition-colors ${
+                      isPaid ? 'bg-green-600 text-white'
                         : busyCell === key ? 'bg-stone-300'
                         : 'bg-stone-100 text-stone-500 hover:bg-brand-100'}`}>
                     {w}

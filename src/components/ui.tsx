@@ -22,7 +22,7 @@ export function Modal({
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4"
       onClick={onClose}>
       <div
-        className="bg-surface w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[92vh] overflow-y-auto border border-stone-200 shadow-[0_0_40px_rgba(124,58,237,.35)]"
+        className="bg-surface w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[92vh] overflow-y-auto border border-stone-200 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-surface border-b border-stone-200 px-4 py-3 flex items-center justify-between">

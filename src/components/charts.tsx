@@ -1,4 +1,4 @@
-/** Tiny dependency-free SVG charts, neon-styled. */
+/** Tiny dependency-free SVG charts, professional palette. */
 
 export function Donut({
   value, max, label, sub, size = 110,
@@ -9,24 +9,18 @@ export function Donut({
   const over = max > 0 && value > max;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={label}>
-      <defs>
-        <linearGradient id="donut-g" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor={over ? '#fb7185' : '#22d3ee'} />
-          <stop offset="100%" stopColor={over ? '#f43f5e' : '#e879f9'} />
-        </linearGradient>
-      </defs>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#261d49" strokeWidth="9" />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e7e5e4" strokeWidth="9" />
       <circle
         cx={size / 2} cy={size / 2} r={r} fill="none"
-        stroke="url(#donut-g)" strokeWidth="9" strokeLinecap="round"
+        stroke={over ? '#dc2626' : '#4338ca'} strokeWidth="9" strokeLinecap="round"
         strokeDasharray={`${c * pct} ${c}`}
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        style={{ filter: 'drop-shadow(0 0 6px rgba(168,85,247,.7))', transition: 'stroke-dasharray .6s ease' }}
+        style={{ transition: 'stroke-dasharray .6s ease' }}
       />
-      <text x="50%" y="47%" textAnchor="middle" fill="#ece7ff" fontSize={size / 5.2} fontWeight="800">
+      <text x="50%" y="47%" textAnchor="middle" fill="#1c1917" fontSize={size / 5.2} fontWeight="800">
         {Math.round(pct * 100)}%
       </text>
-      <text x="50%" y="63%" textAnchor="middle" fill="#a89ce0" fontSize={size / 10.5}>
+      <text x="50%" y="63%" textAnchor="middle" fill="#78716c" fontSize={size / 10.5}>
         {sub ?? label}
       </text>
     </svg>
@@ -46,30 +40,17 @@ export function Sparkline({
     <svg width="100%" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="block">
       <defs>
         <linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="rgba(34,211,238,.45)" />
-          <stop offset="100%" stopColor="rgba(34,211,238,0)" />
-        </linearGradient>
-        <linearGradient id="spark-line" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#22d3ee" />
-          <stop offset="100%" stopColor="#e879f9" />
+          <stop offset="0%" stopColor="rgba(67,56,202,.18)" />
+          <stop offset="100%" stopColor="rgba(67,56,202,0)" />
         </linearGradient>
       </defs>
       <path d={area} fill="url(#spark-fill)" />
-      <path d={line} fill="none" stroke="url(#spark-line)" strokeWidth="2.5" strokeLinecap="round"
-        style={{ filter: 'drop-shadow(0 0 4px rgba(34,211,238,.8))' }} />
+      <path d={line} fill="none" stroke="#4338ca" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   );
 }
 
-const BAR_COLORS = [
-  'linear-gradient(90deg,#22d3ee,#2563eb)',
-  'linear-gradient(90deg,#e879f9,#a855f7)',
-  'linear-gradient(90deg,#a3e635,#10b981)',
-  'linear-gradient(90deg,#fbbf24,#f97316)',
-  'linear-gradient(90deg,#fb7185,#f43f5e)',
-  'linear-gradient(90deg,#8b5cf6,#6366f1)',
-  'linear-gradient(90deg,#2dd4bf,#0ea5e9)',
-];
+const BAR_COLORS = ['#4338ca', '#0369a1', '#15803d', '#b45309', '#be123c', '#6d28d9', '#0f766e'];
 
 export function MiniBars({
   data, format,
@@ -86,8 +67,8 @@ export function MiniBars({
           <div className="bar-track">
             <div style={{
               width: `${Math.max(3, (d.value / max) * 100)}%`, height: '100%',
-              borderRadius: 9999, backgroundImage: BAR_COLORS[i % BAR_COLORS.length],
-              boxShadow: '0 0 8px rgba(168,85,247,.4)', transition: 'width .5s ease',
+              borderRadius: 9999, background: BAR_COLORS[i % BAR_COLORS.length],
+              transition: 'width .5s ease',
             }} />
           </div>
         </div>

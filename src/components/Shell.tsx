@@ -3,14 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useApp } from '../state/AppContext';
 
 const tabIcons: Record<string, string> = {
-  home: '🏠', collect: '💰', expenses: '🧾', tasks: '✅', more: '✨',
-};
-const tabGlow: Record<string, string> = {
-  home: 'drop-shadow(0 0 8px rgba(232,121,249,.9))',
-  collect: 'drop-shadow(0 0 8px rgba(163,230,53,.9))',
-  expenses: 'drop-shadow(0 0 8px rgba(34,211,238,.9))',
-  tasks: 'drop-shadow(0 0 8px rgba(251,191,36,.9))',
-  more: 'drop-shadow(0 0 8px rgba(139,92,246,.9))',
+  home: '🏠', collect: '💰', expenses: '🧾', tasks: '✅', more: '☰',
 };
 
 export default function Shell() {
@@ -46,47 +39,41 @@ export default function Shell() {
     { to: '/transactions', label: t('nav.transactions'), icon: '📒' },
     { to: '/tasks', label: t('nav.tasks'), icon: '✅' },
     { to: '/reports', label: t('nav.reports'), icon: '📊' },
-    { to: '/more', label: t('nav.more'), icon: '✨' },
+    { to: '/more', label: t('nav.more'), icon: '☰' },
   ];
 
   return (
     <div className="min-h-screen md:flex">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex md:flex-col w-60 shrink-0 min-h-screen sticky top-0 border-r border-stone-200"
-        style={{ background: 'linear-gradient(180deg,#160c33 0%,#0b0620 100%)' }}>
-        <div className="p-4 font-black text-xl tracking-tight flex items-center gap-2 text-white">
-          <img src="/favicon.svg" alt="" className="w-9 h-9"
-            style={{ filter: 'drop-shadow(0 0 10px rgba(217,70,239,.8))' }} />
-          <span className="bg-gradient-to-r from-fuchsia-400 via-purple-300 to-cyan-300 bg-clip-text text-transparent">
-            {t('app.name')}
-          </span>
+      <aside className="hidden md:flex md:flex-col w-60 shrink-0 min-h-screen sticky top-0 bg-white border-r border-stone-200">
+        <div className="p-4 font-black text-xl tracking-tight flex items-center gap-2 text-brand-800">
+          <img src="/favicon.svg" alt="" className="w-9 h-9" />
+          {t('app.name')}
         </div>
-        <nav className="flex-1 px-2 space-y-1">
+        <nav className="flex-1 px-2 space-y-0.5">
           {sideLinks.map((l) => (
             <NavLink key={l.to} to={l.to} end={l.to === '/'}
               className={({ isActive }) =>
-                `flex items-center gap-2.5 rounded-lg px-3 py-2 transition-all ${
+                `flex items-center gap-2.5 rounded-lg px-3 py-2 transition-colors ${
                   isActive
-                    ? 'text-white font-semibold bg-gradient-to-r from-fuchsia-600/80 to-violet-600/80 shadow-[0_0_16px_rgba(168,85,247,.5)]'
-                    : 'text-stone-500 hover:text-stone-800 hover:bg-stone-100'}`}>
+                    ? 'bg-brand-50 text-brand-800 font-semibold border border-brand-100'
+                    : 'text-stone-600 hover:bg-stone-50'}`}>
               <span>{l.icon}</span>{l.label}
             </NavLink>
           ))}
         </nav>
-        <div className="p-3 text-[10px] text-stone-400">✨ {t('app.tagline')}</div>
+        <div className="p-3 text-[10px] text-stone-400">{t('app.tagline')}</div>
       </aside>
 
       <div className="flex-1 flex flex-col min-h-screen pb-16 md:pb-0">
         {/* Header */}
-        <header className="sticky top-0 z-40 border-b border-stone-200 backdrop-blur-md"
-          style={{ background: 'rgba(13,7,34,.85)' }}>
+        <header className="sticky top-0 z-40 bg-white border-b border-stone-200">
           <div className="flex items-center gap-2 px-4 py-2.5">
-            <img src="/favicon.svg" alt="" className="w-7 h-7 md:hidden"
-              style={{ filter: 'drop-shadow(0 0 8px rgba(217,70,239,.8))' }} />
+            <img src="/favicon.svg" alt="" className="w-7 h-7 md:hidden" />
             <select
               value={currentProgramId ?? ''}
               onChange={(e) => { setCurrentProgramId(e.target.value); nav('/'); }}
-              className="flex-1 md:max-w-sm bg-transparent border-0 font-bold text-white focus:ring-0"
+              className="flex-1 md:max-w-sm border-0 bg-transparent font-bold text-stone-800 focus:ring-0"
             >
               {isPadmin && orgGroups.length > 1
                 ? orgGroups.map(([org, progs]) => (
@@ -100,13 +87,12 @@ export default function Shell() {
                     <option key={p.id} value={p.id}>{p.name} {p.year}</option>
                   ))}
             </select>
-            <span className="text-xs text-stone-500">
+            <span className="text-xs text-stone-500 shrink-0">
               {isPadmin ? '🛡️ Admin' : current ? t(`roles.${current.role}`) : ''}
             </span>
           </div>
           {frozen && (
-            <div className="text-xs px-4 py-1.5 text-cyan-200"
-              style={{ background: 'linear-gradient(90deg,rgba(34,211,238,.15),rgba(124,58,237,.15))' }}>
+            <div className="bg-stone-100 text-stone-600 text-xs px-4 py-1.5 border-t border-stone-200">
               ❄️ {t('dashboard.frozen')}
             </div>
           )}
@@ -117,21 +103,17 @@ export default function Shell() {
         </main>
 
         {/* Mobile bottom nav */}
-        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 flex border-t border-stone-200 backdrop-blur-md"
-          style={{ background: 'rgba(13,7,34,.92)' }}>
+        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 flex bg-white border-t border-stone-200">
           {tabs.map((x) => (
             <NavLink key={x.to} to={x.to} end={x.to === '/'}
               className={({ isActive }) =>
-                `flex-1 flex flex-col items-center py-1.5 text-[11px] transition-all ${
-                  isActive ? 'text-white font-bold' : 'text-stone-500'}`}>
+                `flex-1 flex flex-col items-center py-1.5 text-[11px] ${
+                  isActive ? 'text-brand-700 font-bold' : 'text-stone-500'}`}>
               {({ isActive }) => (
                 <>
-                  <span className="text-xl leading-6"
-                    style={isActive ? { filter: tabGlow[x.key] } : undefined}>
-                    {tabIcons[x.key]}
-                  </span>
+                  <span className="text-xl leading-6">{tabIcons[x.key]}</span>
                   {t(`nav.${x.key}`)}
-                  <span className={`h-0.5 w-6 rounded-full mt-0.5 ${isActive ? 'bg-gradient-to-r from-cyan-400 to-fuchsia-500' : 'bg-transparent'}`} />
+                  <span className={`h-0.5 w-6 rounded-full mt-0.5 ${isActive ? 'bg-brand-700' : 'bg-transparent'}`} />
                 </>
               )}
             </NavLink>
