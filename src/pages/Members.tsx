@@ -45,14 +45,20 @@ export default function Members() {
     setBusy(false);
   };
 
+  // mirrors public.default_perms() in the database
+  const DEFAULTS: Record<Role, Record<Perm, boolean>> = {
+    committee_admin: { view_money: true, collect: true, expense: true, approve: true, coupons: true, tasks: true },
+    treasurer: { view_money: true, collect: true, expense: true, approve: true, coupons: true, tasks: true },
+    collector: { view_money: false, collect: true, expense: true, approve: false, coupons: true, tasks: false },
+    member: { view_money: false, collect: false, expense: true, approve: false, coupons: false, tasks: false },
+    viewer: { view_money: true, collect: false, expense: false, approve: false, coupons: true, tasks: false },
+  };
+
   const updateRole = async (m: Membership, role: Role) => {
     try {
       await supabase.from('program_members')
-        .update({ role, permissions: {} }) // reset to defaults for new role
+        .update({ role, permissions: DEFAULTS[role] })
         .eq('id', m.id).throwOnError();
-      // trigger only fills defaults on insert; set explicitly
-      const { data } = await supabase.rpc('default_perms', { p_role: role });
-      await supabase.from('program_members').update({ permissions: data }).eq('id', m.id);
       await load();
     } catch (e) { setErr(friendlyError(e)); }
   };

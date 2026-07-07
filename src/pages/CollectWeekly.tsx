@@ -23,7 +23,8 @@ export default function CollectWeekly() {
     const [h, e] = await Promise.all([
       supabase.from('houses').select('*').eq('program_id', currentProgramId)
         .eq('in_subscription', true).order('sort_order').order('name'),
-      supabase.from('income_entries').select('*').eq('program_id', currentProgramId)
+      supabase.from('income_entries').select('id, house_id, subscription_week')
+        .eq('program_id', currentProgramId)
         .eq('entry_type', 'subscription').is('deleted_at', null),
     ]);
     setHouses((h.data ?? []) as House[]);
@@ -103,7 +104,7 @@ export default function CollectWeekly() {
                 {due > 0 && <div className="chip-red">{t('collect.arrears')}: {due}</div>}
               </div>
             </summary>
-            <div className="px-3 pb-3 grid grid-cols-8 sm:grid-cols-13 gap-1">
+            <div className="px-3 pb-3 grid grid-cols-8 sm:grid-cols-[repeat(13,minmax(0,1fr))] gap-1">
               {Array.from({ length: weeks }, (_, i) => i + 1).map((w) => {
                 const isPaid = paid.has(`${house.id}:${w}`);
                 const key = `${house.id}:${w}`;

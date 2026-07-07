@@ -1,77 +1,104 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase, fmtINR, fmtDate } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { Empty } from '../components/ui';
-import type { BudgetItem, CouponBook, Expense, ExpenseHead, IncomeEntry } from '../lib/types';
+import type { BudgetItem, CouponBook, ExpenseHead } from '../lib/types';
 
 type Tab = 'pnl' | 'cashbook' | 'budget' | 'coupon';
 const INCOME_TYPES = ['house', 'coupon', 'subscription', 'interest', 'ad_brochure', 'ad_stage', 'donation'];
+const PAGE = 100;
+
+interface CashRow { date: string; created: string; label: string; inAmt: number; outAmt: number; bal?: number }
 
 export default function Reports() {
   const { t, i18n } = useTranslation();
   const { currentProgramId, finance, current } = useApp();
   const [tab, setTab] = useState<Tab>('pnl');
-  const [income, setIncome] = useState<IncomeEntry[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [incomeByType, setIncomeByType] = useState<Map<string, number>>(new Map());
+  const [expenseByHead, setExpenseByHead] = useState<Map<string, number>>(new Map());
   const [heads, setHeads] = useState<ExpenseHead[]>([]);
   const [budget, setBudget] = useState<BudgetItem[]>([]);
   const [books, setBooks] = useState<CouponBook[]>([]);
+  const [cashRows, setCashRows] = useState<CashRow[]>([]);
+  const [cashPage, setCashPage] = useState(0);
+  const [cashDone, setCashDone] = useState(false);
 
+  // Aggregates come from grouped views — never raw transaction rows.
   useEffect(() => {
     if (!currentProgramId) return;
     Promise.all([
-      supabase.from('income_entries').select('*').eq('program_id', currentProgramId).is('deleted_at', null),
-      supabase.from('expenses').select('*').eq('program_id', currentProgramId).is('deleted_at', null),
+      supabase.from('v_income_by_type').select('*').eq('program_id', currentProgramId),
+      supabase.from('v_expense_by_head').select('*').eq('program_id', currentProgramId),
       supabase.from('expense_heads').select('*').eq('program_id', currentProgramId).order('sort_order'),
       supabase.from('budget_items').select('*').eq('program_id', currentProgramId),
-      supabase.from('v_coupon_books').select('*').eq('program_id', currentProgramId).order('book_no'),
+      supabase.from('v_coupon_books').select('*').eq('program_id', currentProgramId).order('book_no').limit(500),
     ]).then(([i, e, h, b, c]) => {
-      setIncome((i.data ?? []) as IncomeEntry[]);
-      setExpenses((e.data ?? []) as Expense[]);
+      setIncomeByType(new Map(((i.data ?? []) as { entry_type: string; total: number }[])
+        .map((r) => [r.entry_type, Number(r.total)])));
+      setExpenseByHead(new Map(((e.data ?? []) as { head_id: string; total: number }[])
+        .map((r) => [r.head_id, Number(r.total)])));
       setHeads((h.data ?? []) as ExpenseHead[]);
       setBudget((b.data ?? []) as BudgetItem[]);
       setBooks((c.data ?? []) as CouponBook[]);
     });
   }, [currentProgramId]);
 
-  const headName = (id: string) => {
+  const headName = useCallback((id: string) => {
     const h = heads.find((x) => x.id === id);
     return (i18n.language === 'ml' && h?.name_ml) ? h.name_ml : h?.name ?? '';
-  };
-  const paidExpenses = useMemo(() => expenses.filter((e) => e.status === 'paid'), [expenses]);
+  }, [heads, i18n.language]);
 
-  const incomeByType = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const r of income) m.set(r.entry_type, (m.get(r.entry_type) ?? 0) + Number(r.amount));
-    return m;
-  }, [income]);
+  // Cash book: newest-first pages; running balance walks DOWN from the
+  // current total so we never need the full history in the browser.
+  const loadCashPage = useCallback(async (page: number) => {
+    if (!currentProgramId) return;
+    const from = page * PAGE, to = from + PAGE - 1;
+    const [i, e] = await Promise.all([
+      supabase.from('income_entries')
+        .select('amount, entry_type, payer_name, receipt_no, entry_date, created_at')
+        .eq('program_id', currentProgramId).is('deleted_at', null)
+        .order('created_at', { ascending: false }).range(from, to),
+      supabase.from('expenses')
+        .select('amount, description, vendor_name, head_id, expense_date, created_at')
+        .eq('program_id', currentProgramId).is('deleted_at', null).eq('status', 'paid')
+        .order('created_at', { ascending: false }).range(from, to),
+    ]);
+    const inc = (i.data ?? []).map((r) => ({
+      date: r.entry_date as string, created: r.created_at as string,
+      label: `${t('collect.' + r.entry_type)}${r.payer_name ? ' · ' + r.payer_name : ''} #${r.receipt_no ?? ''}`,
+      inAmt: Number(r.amount), outAmt: 0,
+    }));
+    const exp = (e.data ?? []).map((r) => ({
+      date: r.expense_date as string, created: r.created_at as string,
+      label: (r.description || r.vendor_name || headName(r.head_id as string)) as string,
+      inAmt: 0, outAmt: Number(r.amount),
+    }));
+    if ((i.data?.length ?? 0) < PAGE && (e.data?.length ?? 0) < PAGE) setCashDone(true);
+    setCashRows((prev) => {
+      const merged = [...prev, ...inc, ...exp].sort((a, b) => b.created.localeCompare(a.created));
+      return merged;
+    });
+  }, [currentProgramId, headName, t]);
 
-  const expenseByHead = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const r of paidExpenses) m.set(r.head_id, (m.get(r.head_id) ?? 0) + Number(r.amount));
-    return m;
-  }, [paidExpenses]);
-
-  const cashbook = useMemo(() => {
-    const rows = [
-      ...income.map((r) => ({
-        date: r.entry_date, label: `${t('collect.' + r.entry_type)}${r.payer_name ? ' · ' + r.payer_name : ''} #${r.receipt_no ?? ''}`,
-        inAmt: Number(r.amount), outAmt: 0,
-      })),
-      ...paidExpenses.map((r) => ({
-        date: r.expense_date, label: r.description || r.vendor_name || headName(r.head_id),
-        inAmt: 0, outAmt: Number(r.amount),
-      })),
-    ].sort((a, b) => a.date.localeCompare(b.date));
-    let bal = Number(current?.programs?.opening_balance ?? 0);
-    return rows.map((r) => { bal += r.inAmt - r.outAmt; return { ...r, bal }; });
-  }, [income, paidExpenses, current, t]); // eslint-disable-line
+  useEffect(() => {
+    setCashRows([]); setCashPage(0); setCashDone(false);
+    if (tab === 'cashbook') loadCashPage(0);
+  }, [tab, currentProgramId, loadCashPage]);
 
   const totalIncome = Number(finance?.income_total ?? 0);
   const totalExpense = Number(finance?.expense_total ?? 0);
   const opening = Number(finance?.opening_balance ?? 0);
   const retained = opening + totalIncome - totalExpense;
+
+  const cashWithBal = useMemo(() => {
+    let bal = retained;
+    return cashRows.map((r) => {
+      const row = { ...r, bal };
+      bal = bal - r.inAmt + r.outAmt;
+      return row;
+    });
+  }, [cashRows, retained]);
 
   const budgetRows = useMemo(() => {
     const rows: { label: string; planned: number; actual: number }[] = [];
@@ -86,7 +113,7 @@ export default function Reports() {
       if (planned || actual) rows.push({ label: `▼ ${headName(h.id)}`, planned, actual });
     }
     return rows;
-  }, [budget, incomeByType, expenseByHead, heads, t]); // eslint-disable-line
+  }, [budget, incomeByType, expenseByHead, heads, t, headName]);
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'pnl', label: t('reports.pnl') },
@@ -168,31 +195,39 @@ export default function Reports() {
       )}
 
       {tab === 'cashbook' && (
-        <div className="card p-0 overflow-x-auto">
-          <table className="w-full text-sm min-w-[480px]">
-            <thead>
-              <tr className="text-left text-xs text-stone-500 border-b border-stone-200">
-                <th className="p-2">{t('common.date')}</th>
-                <th className="p-2"></th>
-                <th className="p-2 text-right">{t('reports.inflow')}</th>
-                <th className="p-2 text-right">{t('reports.outflow')}</th>
-                <th className="p-2 text-right">{t('reports.runningBalance')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cashbook.length === 0 && <tr><td colSpan={5}><Empty /></td></tr>}
-              {cashbook.map((r, idx) => (
-                <tr key={idx} className="border-b border-stone-50">
-                  <td className="p-2 whitespace-nowrap">{fmtDate(r.date, i18n.language)}</td>
-                  <td className="p-2">{r.label}</td>
-                  <td className="p-2 text-right money text-green-700">{r.inAmt ? fmtINR(r.inAmt) : ''}</td>
-                  <td className="p-2 text-right money text-red-700">{r.outAmt ? fmtINR(r.outAmt) : ''}</td>
-                  <td className="p-2 text-right money font-semibold">{fmtINR(r.bal)}</td>
+        <>
+          <div className="card p-0 overflow-x-auto">
+            <table className="w-full text-sm min-w-[480px]">
+              <thead>
+                <tr className="text-left text-xs text-stone-500 border-b border-stone-200">
+                  <th className="p-2">{t('common.date')}</th>
+                  <th className="p-2"></th>
+                  <th className="p-2 text-right">{t('reports.inflow')}</th>
+                  <th className="p-2 text-right">{t('reports.outflow')}</th>
+                  <th className="p-2 text-right">{t('reports.runningBalance')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {cashWithBal.length === 0 && <tr><td colSpan={5}><Empty /></td></tr>}
+                {cashWithBal.map((r, idx) => (
+                  <tr key={idx} className="border-b border-stone-50">
+                    <td className="p-2 whitespace-nowrap">{fmtDate(r.date, i18n.language)}</td>
+                    <td className="p-2">{r.label}</td>
+                    <td className="p-2 text-right money text-green-700">{r.inAmt ? fmtINR(r.inAmt) : ''}</td>
+                    <td className="p-2 text-right money text-red-700">{r.outAmt ? fmtINR(r.outAmt) : ''}</td>
+                    <td className="p-2 text-right money font-semibold">{fmtINR(r.bal)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {!cashDone && cashRows.length > 0 && (
+            <button className="btn-secondary w-full mt-3 print:hidden"
+              onClick={() => { const next = cashPage + 1; setCashPage(next); loadCashPage(next); }}>
+              ↓ {t('common.view')}
+            </button>
+          )}
+        </>
       )}
 
       {tab === 'budget' && (

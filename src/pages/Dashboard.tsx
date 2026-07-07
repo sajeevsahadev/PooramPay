@@ -38,7 +38,7 @@ export default function Dashboard() {
       supabase.from('v_my_cash').select('cash_holding')
         .eq('program_id', pid).eq('collected_by', uid).maybeSingle(),
       can('coupons')
-        ? supabase.from('v_coupon_books').select('outstanding').eq('program_id', pid)
+        ? supabase.from('v_coupon_totals').select('outstanding').eq('program_id', pid)
         : Promise.resolve({ data: [] as { outstanding: number }[] }),
       supabase.from('committee_tasks').select('id, program_members!assignee_member_id(profile_id)')
         .eq('program_id', pid).neq('status', 'done'),

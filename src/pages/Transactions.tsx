@@ -22,21 +22,28 @@ export default function Transactions() {
   const [deleting, setDeleting] = useState<Row | null>(null);
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
+  const [pages, setPages] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const PAGE = 200;
 
-  const load = async () => {
+  // Paginated: fetches `pages` * PAGE newest rows of each ledger. Search and
+  // filters apply to loaded rows; older history loads on demand.
+  const load = async (pageCount = pages) => {
     if (!currentProgramId) return;
+    const to = pageCount * PAGE - 1;
     const [i, e, h] = await Promise.all([
       supabase.from('income_entries').select('*').eq('program_id', currentProgramId)
-        .is('deleted_at', null).order('created_at', { ascending: false }).limit(1000),
+        .is('deleted_at', null).order('created_at', { ascending: false }).range(0, to),
       supabase.from('expenses').select('*').eq('program_id', currentProgramId)
-        .is('deleted_at', null).eq('status', 'paid').order('created_at', { ascending: false }).limit(1000),
+        .is('deleted_at', null).eq('status', 'paid').order('created_at', { ascending: false }).range(0, to),
       supabase.from('expense_heads').select('*').eq('program_id', currentProgramId),
     ]);
     setIncome((i.data ?? []) as IncomeEntry[]);
     setExpenses((e.data ?? []) as Expense[]);
     setHeads((h.data ?? []) as ExpenseHead[]);
+    setHasMore((i.data?.length ?? 0) === to + 1 || (e.data?.length ?? 0) === to + 1);
   };
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [currentProgramId]);
+  useEffect(() => { setPages(1); load(1); /* eslint-disable-next-line */ }, [currentProgramId]);
 
   const rows: Row[] = useMemo(() => {
     const headName = (id: string) => heads.find((x) => x.id === id)?.name ?? '';
@@ -108,6 +115,13 @@ export default function Transactions() {
           </div>
         ))}
       </div>
+
+      {hasMore && (
+        <button className="btn-secondary w-full mt-3"
+          onClick={() => { const n = pages + 1; setPages(n); load(n); }}>
+          ↓ {t('common.view')}
+        </button>
+      )}
 
       {deleting && (
         <Modal title={t('common.delete')} onClose={() => setDeleting(null)}>

@@ -194,6 +194,24 @@ await expectError('collector cannot soft-delete',
 const { error: restErr } = await admin.client.rpc('restore_record', { p_table: 'income_entries', p_id: inc2.id });
 ok('admin restores entry', !restErr, restErr?.message);
 
+console.log('== security hardening ==');
+await expectError('cannot self-grant platform admin',
+  collector.client.from('profiles').update({ is_platform_admin: true })
+    .eq('id', collector.id).select().single());
+const { data: profStill } = await collector.client.from('profiles')
+  .select('is_platform_admin').eq('id', collector.id).single();
+ok('is_platform_admin unchanged', profStill?.is_platform_admin === false);
+const { data: spoof } = await collector.client.from('income_entries')
+  .insert({ program_id: pid, entry_type: 'donation', amount: 10, mode: 'cash',
+            handed_over: true, collected_by: collector.id, created_by: collector.id })
+  .select().single();
+ok('handed_over spoof forced to false server-side', spoof?.handed_over === false, `got ${spoof?.handed_over}`);
+const { data: colAudit } = await collector.client.from('audit_log').select('id')
+  .eq('program_id', pid).limit(1);
+ok('collector without view_money cannot read audit log', (colAudit?.length ?? 0) === 0, `got ${colAudit?.length}`);
+const { data: aggInc } = await admin.client.from('v_income_by_type').select('*').eq('program_id', pid);
+ok('aggregate view income-by-type works', (aggInc?.length ?? 0) >= 3, `got ${aggInc?.length}`);
+
 console.log('== audit log ==');
 const { data: audit } = await admin.client.from('audit_log').select('*').eq('program_id', pid);
 ok('audit log populated', (audit?.length ?? 0) > 5, `got ${audit?.length}`);
@@ -229,7 +247,15 @@ ok('stranger sees no income', (sInc?.length ?? 0) === 0, `got ${sInc?.length}`);
 
 console.log('== storage ==');
 const up = await admin.client.storage.from('bills').upload(`${pid}/test.txt`, new Blob(['bill']), { upsert: true });
-ok('authenticated upload to bills bucket', !up.error, up.error?.message);
+ok('member upload to own program folder', !up.error, up.error?.message);
+const { error: memberDl } = await collector.client.storage.from('bills').download(`${pid}/test.txt`);
+ok('member can download own committee bill', !memberDl, memberDl?.message);
+const { error: strangerDl } = await stranger.client.storage.from('bills').download(`${pid}/test.txt`);
+ok('stranger cannot download another committee bill', !!strangerDl);
+const strangerUp = await stranger.client.storage.from('bills').upload(`${pid}/hack.txt`, new Blob(['x']));
+ok('stranger cannot upload into another committee folder', !!strangerUp.error, 'upload succeeded!');
+const rootUp = await admin.client.storage.from('bills').upload('no-folder.txt', new Blob(['x']));
+ok('upload outside a program folder rejected', !!rootUp.error, 'upload succeeded!');
 
 console.log(`\n==== RESULT: ${passed} passed, ${failed} failed ====`);
 process.exit(failed ? 1 : 0);
