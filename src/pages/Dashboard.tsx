@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase, fmtINR, fmtDate } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { friendlyError } from '../components/ui';
+import { Donut, MiniBars, Sparkline } from '../components/charts';
 
 interface TxRow {
   id: string; kind: 'in' | 'out'; label: string; amount: number; date: string;
@@ -16,8 +17,11 @@ export default function Dashboard() {
   const [myCash, setMyCash] = useState(0);
   const [couponOut, setCouponOut] = useState(0);
   const [myTasks, setMyTasks] = useState(0);
+  const [budgetExpense, setBudgetExpense] = useState(0);
+  const [incomeByType, setIncomeByType] = useState<{ label: string; value: number }[]>([]);
+  const [dailyIncome, setDailyIncome] = useState<number[]>([]);
   const [pendingHandovers, setPendingHandovers] = useState<
-    { id: string; amount: number; from_profile: string; name?: string }[]
+    { id: string; amount: number; from_profile: string }[]
   >([]);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -25,8 +29,9 @@ export default function Dashboard() {
     if (!currentProgramId) return;
     const pid = currentProgramId;
     const uid = session!.user.id;
+    const since = new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10);
 
-    const [inc, exp, cash, books, tasks, hands] = await Promise.all([
+    const [inc, exp, cash, coupons, tasks, hands, bud, byType, byDay] = await Promise.all([
       supabase.from('income_entries')
         .select('id, amount, entry_type, payer_name, entry_date, created_at')
         .eq('program_id', pid).is('deleted_at', null)
@@ -46,12 +51,16 @@ export default function Dashboard() {
         ? supabase.from('cash_handovers').select('id, amount, from_profile')
             .eq('program_id', pid).eq('status', 'pending')
         : Promise.resolve({ data: [] as { id: string; amount: number; from_profile: string }[] }),
+      supabase.from('budget_items').select('side, planned').eq('program_id', pid),
+      supabase.from('v_income_by_type').select('entry_type, total').eq('program_id', pid),
+      supabase.from('v_income_by_day').select('entry_date, total')
+        .eq('program_id', pid).gte('entry_date', since).order('entry_date'),
     ]);
 
     const rows: TxRow[] = [
       ...(inc.data ?? []).map((r) => ({
         id: r.id, kind: 'in' as const,
-        label: `${t('collect.' + (r.entry_type === 'ad_brochure' || r.entry_type === 'ad_stage' ? r.entry_type : r.entry_type === 'house' ? 'house' : r.entry_type))}${r.payer_name ? ' · ' + r.payer_name : ''}`,
+        label: `${t('collect.' + r.entry_type)}${r.payer_name ? ' · ' + r.payer_name : ''}`,
         amount: r.amount, date: r.created_at,
       })),
       ...(exp.data ?? []).map((r) => ({
@@ -62,12 +71,28 @@ export default function Dashboard() {
     ].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
     setRecent(rows);
     setMyCash((cash.data as { cash_holding: number } | null)?.cash_holding ?? 0);
-    setCouponOut(((books.data ?? []) as { outstanding: number }[])
+    setCouponOut(((coupons.data ?? []) as { outstanding: number }[])
       .reduce((s, b) => s + Number(b.outstanding || 0), 0));
     type TaskRow = { id: string; program_members: { profile_id: string | null } | null };
     setMyTasks(((tasks.data ?? []) as unknown as TaskRow[])
       .filter((x) => x.program_members?.profile_id === uid).length);
     setPendingHandovers((hands.data ?? []) as { id: string; amount: number; from_profile: string }[]);
+
+    setBudgetExpense(((bud.data ?? []) as { side: string; planned: number }[])
+      .filter((b) => b.side === 'expense').reduce((s, b) => s + Number(b.planned), 0));
+    setIncomeByType(((byType.data ?? []) as { entry_type: string; total: number }[])
+      .map((r) => ({ label: t('collect.' + r.entry_type), value: Number(r.total) }))
+      .sort((a, b) => b.value - a.value).slice(0, 5));
+
+    // fill missing days with zero so the sparkline shows real rhythm
+    const dayMap = new Map(((byDay.data ?? []) as { entry_date: string; total: number }[])
+      .map((r) => [r.entry_date, Number(r.total)]));
+    const days: number[] = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+      days.push(dayMap.get(d) ?? 0);
+    }
+    setDailyIncome(days);
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [currentProgramId]);
@@ -88,28 +113,56 @@ export default function Dashboard() {
   };
 
   const showMoney = can('view_money');
+  const spark14 = dailyIncome.reduce((a, b) => a + b, 0);
 
   return (
     <div className="space-y-4">
-      {msg && <div className="bg-brand-100 text-brand-800 rounded-lg p-3 text-sm" onClick={() => setMsg(null)}>{msg}</div>}
+      {msg && <div className="bg-brand-100 text-stone-800 rounded-lg p-3 text-sm" onClick={() => setMsg(null)}>{msg}</div>}
 
       {showMoney && (
         <div className="grid grid-cols-2 gap-3">
-          <div className="card bg-brand-800 text-white border-0">
-            <div className="text-xs uppercase tracking-wide opacity-75">{t('dashboard.cashInHand')}</div>
+          <div className="stat stat-fuchsia">
+            <div className="text-xs uppercase tracking-wide opacity-80">💵 {t('dashboard.cashInHand')}</div>
             <div className="text-2xl font-black money">{fmtINR(finance?.cash_balance)}</div>
           </div>
-          <div className="card bg-brand-700 text-white border-0">
-            <div className="text-xs uppercase tracking-wide opacity-75">{t('dashboard.bankBalance')}</div>
+          <div className="stat stat-cyan">
+            <div className="text-xs uppercase tracking-wide opacity-80">🏦 {t('dashboard.bankBalance')}</div>
             <div className="text-2xl font-black money">{fmtINR(finance?.bank_balance)}</div>
           </div>
-          <div className="card">
-            <div className="text-xs uppercase tracking-wide text-stone-500">{t('dashboard.collected')}</div>
-            <div className="text-xl font-bold text-green-700 money">{fmtINR(finance?.income_total)}</div>
+          <div className="stat stat-green">
+            <div className="text-xs uppercase tracking-wide opacity-80">📈 {t('dashboard.collected')}</div>
+            <div className="text-xl font-black money">{fmtINR(finance?.income_total)}</div>
+          </div>
+          <div className="stat stat-red">
+            <div className="text-xs uppercase tracking-wide opacity-80">📉 {t('dashboard.spent')}</div>
+            <div className="text-xl font-black money">{fmtINR(finance?.expense_total)}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Insights */}
+      {showMoney && (incomeByType.length > 0 || budgetExpense > 0) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="card flex items-center gap-4">
+            <Donut value={Number(finance?.expense_total ?? 0)} max={budgetExpense}
+              label={t('dashboard.budgetUsed')} sub={t('dashboard.budgetUsed')} />
+            <div className="min-w-0">
+              <div className="text-sm font-bold mb-1">🎯 {t('reports.budgetVsActual')}</div>
+              <div className="text-xs text-stone-500">
+                {t('reports.actual')}: <b className="money text-stone-700">{fmtINR(finance?.expense_total)}</b><br />
+                {t('reports.planned')}: <b className="money text-stone-700">{fmtINR(budgetExpense)}</b>
+              </div>
+              <Link to="/reports" className="text-xs font-semibold text-brand-600">{t('nav.reports')} ›</Link>
+            </div>
           </div>
           <div className="card">
-            <div className="text-xs uppercase tracking-wide text-stone-500">{t('dashboard.spent')}</div>
-            <div className="text-xl font-bold text-red-700 money">{fmtINR(finance?.expense_total)}</div>
+            <div className="flex justify-between items-baseline mb-1">
+              <div className="text-sm font-bold">⚡ {t('dashboard.collected')} · 14d</div>
+              <div className="money text-sm font-bold text-green-700">{fmtINR(spark14)}</div>
+            </div>
+            <Sparkline points={dailyIncome} />
+            <div className="mt-3 text-sm font-bold mb-1">🌈 {t('reports.byType')}</div>
+            <MiniBars data={incomeByType} format={fmtINR} />
           </div>
         </div>
       )}
@@ -117,18 +170,21 @@ export default function Dashboard() {
       {/* Alerts */}
       <div className="space-y-2">
         {can('approve') && (finance?.pending_claims ?? 0) > 0 && (
-          <Link to="/expenses" className="card flex justify-between items-center block hover:bg-brand-50">
-            <span>⏳ {finance!.pending_claims} {t('dashboard.pendingApprovals')}</span><span>›</span>
+          <Link to="/expenses" className="card flex items-center gap-3 hover:bg-stone-100">
+            <span className="tile tile-amber">⏳</span>
+            <span className="flex-1">{finance!.pending_claims} {t('dashboard.pendingApprovals')}</span><span className="text-stone-400">›</span>
           </Link>
         )}
         {can('coupons') && couponOut > 0 && (
-          <Link to="/coupons" className="card flex justify-between items-center block hover:bg-brand-50">
-            <span>🎟️ {t('dashboard.couponPending')}: <b className="money">{fmtINR(couponOut)}</b></span><span>›</span>
+          <Link to="/coupons" className="card flex items-center gap-3 hover:bg-stone-100">
+            <span className="tile tile-fuchsia">🎟️</span>
+            <span className="flex-1">{t('dashboard.couponPending')}: <b className="money">{fmtINR(couponOut)}</b></span><span className="text-stone-400">›</span>
           </Link>
         )}
         {myTasks > 0 && (
-          <Link to="/tasks" className="card flex justify-between items-center block hover:bg-brand-50">
-            <span>📋 {t('dashboard.myTasks')}: <b>{myTasks}</b></span><span>›</span>
+          <Link to="/tasks" className="card flex items-center gap-3 hover:bg-stone-100">
+            <span className="tile tile-cyan">📋</span>
+            <span className="flex-1">{t('dashboard.myTasks')}: <b>{myTasks}</b></span><span className="text-stone-400">›</span>
           </Link>
         )}
       </div>
@@ -136,9 +192,12 @@ export default function Dashboard() {
       {/* My cash in hand */}
       {myCash > 0 && !frozen && (
         <div className="card flex items-center justify-between gap-3 border-amber-300 bg-amber-50">
-          <div>
-            <div className="text-xs text-stone-500">{t('dashboard.myCashInHand')}</div>
-            <div className="text-lg font-bold money">{fmtINR(myCash)}</div>
+          <div className="flex items-center gap-3">
+            <span className="tile tile-lime">💵</span>
+            <div>
+              <div className="text-xs text-stone-500">{t('dashboard.myCashInHand')}</div>
+              <div className="text-lg font-bold money">{fmtINR(myCash)}</div>
+            </div>
           </div>
           <button className="btn-primary" onClick={handover}>{t('dashboard.handover')}</button>
         </div>
@@ -147,8 +206,9 @@ export default function Dashboard() {
       {/* Treasurer: confirm handovers */}
       {pendingHandovers.map((h) => (
         <div key={h.id} className="card flex items-center justify-between gap-3 border-blue-300 bg-blue-50">
-          <div className="text-sm">
-            💵 {t('dashboard.handover')}: <b className="money">{fmtINR(h.amount)}</b>
+          <div className="text-sm flex items-center gap-3">
+            <span className="tile tile-violet">🤝</span>
+            <span>{t('dashboard.handover')}: <b className="money">{fmtINR(h.amount)}</b></span>
           </div>
           <button className="btn-primary" onClick={() => confirmHandover(h.id)}>{t('common.confirm')}</button>
         </div>

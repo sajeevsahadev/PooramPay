@@ -14,8 +14,8 @@ export default defineConfig({
         name: 'PooramPay',
         short_name: 'PooramPay',
         description: 'Festival committee collections & expense management',
-        theme_color: '#7c2d12',
-        background_color: '#fff7ed',
+        theme_color: '#0a0618',
+        background_color: '#0a0618',
         display: 'standalone',
         start_url: '/',
         icons: [

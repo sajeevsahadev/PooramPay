@@ -143,6 +143,15 @@ export default function Coupons() {
                     <> · {t('coupons.outstanding')}: <b className="money text-red-700">{fmtINR(b.outstanding)}</b></>
                   )}
                 </div>
+                <div className="flex items-center gap-2 mt-2 w-56 max-w-full">
+                  <div className="bar-track flex-1" title={t('coupons.sold')}>
+                    <div className="bar-fill" style={{ width: `${Math.min(100, (b.sold_count / Math.max(b.coupons_count, 1)) * 100)}%` }} />
+                  </div>
+                  <div className="bar-track flex-1" title={t('coupons.remitted')}>
+                    <div className={Number(b.outstanding) > 0 ? 'bar-fill-red' : 'bar-fill-green'}
+                      style={{ width: `${Number(b.sold_value) > 0 ? Math.min(100, (Number(b.remitted) / Number(b.sold_value)) * 100) : 0}%` }} />
+                  </div>
+                </div>
               </div>
               {can('collect') && !frozen && b.status !== 'settled' && b.status !== 'returned' && (
                 <button className="btn-secondary text-sm shrink-0" onClick={() => setRemitBook(b)}>
@@ -219,7 +228,7 @@ export default function Coupons() {
             <div className="grid grid-cols-3 gap-2">
               {['cash', 'upi', 'bank'].map((m) => (
                 <button key={m} onClick={() => setRemit({ ...remit, mode: m })}
-                  className={`btn ${remit.mode === m ? 'bg-brand-700 text-white' : 'bg-white border border-stone-300'}`}>
+                  className={`btn ${remit.mode === m ? 'bg-brand-700 text-white' : 'bg-surface border border-stone-300'}`}>
                   {t(`collect.${m}`)}
                 </button>
               ))}

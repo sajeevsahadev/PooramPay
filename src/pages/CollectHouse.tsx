@@ -117,7 +117,7 @@ export default function CollectHouse() {
           <div className="grid grid-cols-3 gap-2">
             {['cash', 'upi', 'bank'].map((m) => (
               <button key={m} onClick={() => setMode(m)}
-                className={`btn ${mode === m ? 'bg-brand-700 text-white' : 'bg-white border border-stone-300'}`}>
+                className={`btn ${mode === m ? 'bg-brand-700 text-white' : 'bg-surface border border-stone-300'}`}>
                 {t(`collect.${m}`)}
               </button>
             ))}

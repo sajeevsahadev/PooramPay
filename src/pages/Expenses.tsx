@@ -187,7 +187,7 @@ export default function Expenses() {
         {tabs.filter((x) => x.show).map((x) => (
           <button key={x.id} onClick={() => setTab(x.id)}
             className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${
-              tab === x.id ? 'bg-brand-700 text-white font-semibold' : 'bg-white border border-stone-300'}`}>
+              tab === x.id ? 'bg-brand-700 text-white font-semibold' : 'bg-surface border border-stone-300'}`}>
             {x.label}{x.count ? ` (${x.count})` : ''}
           </button>
         ))}
@@ -203,11 +203,11 @@ export default function Expenses() {
           {showNew !== 'claim' && treasurerish && (
             <div className="flex gap-2 mb-3">
               <button onClick={() => setShowNew('wallet')}
-                className={`btn text-sm flex-1 ${showNew === 'wallet' ? 'bg-brand-700 text-white' : 'bg-white border border-stone-300'}`}>
+                className={`btn text-sm flex-1 ${showNew === 'wallet' ? 'bg-brand-700 text-white' : 'bg-surface border border-stone-300'}`}>
                 {t('expenses.wallet')}
               </button>
               <button onClick={() => setShowNew('advance')}
-                className={`btn text-sm flex-1 ${showNew === 'advance' ? 'bg-brand-700 text-white' : 'bg-white border border-stone-300'}`}>
+                className={`btn text-sm flex-1 ${showNew === 'advance' ? 'bg-brand-700 text-white' : 'bg-surface border border-stone-300'}`}>
                 {t('expenses.advance')}
               </button>
             </div>

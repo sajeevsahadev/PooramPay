@@ -132,7 +132,7 @@ export default function Reports() {
         {tabs.map((x) => (
           <button key={x.id} onClick={() => setTab(x.id)}
             className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${
-              tab === x.id ? 'bg-brand-700 text-white font-semibold' : 'bg-white border border-stone-300'}`}>
+              tab === x.id ? 'bg-brand-700 text-white font-semibold' : 'bg-surface border border-stone-300'}`}>
             {x.label}
           </button>
         ))}
@@ -247,8 +247,8 @@ export default function Reports() {
                     </span>
                   </span>
                 </div>
-                <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
-                  <div className={`h-full ${over ? 'bg-red-500' : 'bg-brand-600'}`}
+                <div className="bar-track">
+                  <div className={over ? 'bar-fill-red' : 'bar-fill'}
                     style={{ width: `${Math.min(100, pct)}%` }} />
                 </div>
               </div>

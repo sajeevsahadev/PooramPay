@@ -9,16 +9,16 @@ export default function More() {
   const { profile, can, isCommitteeAdmin, isPadmin } = useApp();
 
   const links = [
-    { to: '/transactions', icon: '📒', label: t('nav.transactions'), show: can('view_money') },
-    { to: '/reports', icon: '📊', label: t('nav.reports'), show: true },
-    { to: '/coupons', icon: '🎟️', label: t('nav.coupons'), show: can('coupons') },
-    { to: '/members', icon: '👥', label: t('nav.members'), show: true },
-    { to: '/areas', icon: '🗺️', label: t('nav.areas'), show: true },
-    { to: '/budget', icon: '🎯', label: t('nav.budget'), show: isCommitteeAdmin },
-    { to: '/setup', icon: '⚙️', label: t('nav.setup'), show: true },
-    { to: '/audit', icon: '📜', label: t('nav.auditLog'), show: true },
-    { to: '/deleted', icon: '🗑️', label: t('nav.deletedTx'), show: can('view_money') },
-    { to: '/admin', icon: '🛡️', label: t('nav.admin'), show: isPadmin },
+    { to: '/transactions', icon: '📒', tile: 'tile-cyan', label: t('nav.transactions'), show: can('view_money') },
+    { to: '/reports', icon: '📊', tile: 'tile-fuchsia', label: t('nav.reports'), show: true },
+    { to: '/coupons', icon: '🎟️', tile: 'tile-violet', label: t('nav.coupons'), show: can('coupons') },
+    { to: '/members', icon: '👥', tile: 'tile-lime', label: t('nav.members'), show: true },
+    { to: '/areas', icon: '🗺️', tile: 'tile-amber', label: t('nav.areas'), show: true },
+    { to: '/budget', icon: '🎯', tile: 'tile-rose', label: t('nav.budget'), show: isCommitteeAdmin },
+    { to: '/setup', icon: '⚙️', tile: 'tile-cyan', label: t('nav.setup'), show: true },
+    { to: '/audit', icon: '📜', tile: 'tile-violet', label: t('nav.auditLog'), show: true },
+    { to: '/deleted', icon: '🗑️', tile: 'tile-rose', label: t('nav.deletedTx'), show: can('view_money') },
+    { to: '/admin', icon: '🛡️', tile: 'tile-amber', label: t('nav.admin'), show: isPadmin },
   ].filter((x) => x.show);
 
   const changeLang = async (lang: string) => {
@@ -29,7 +29,8 @@ export default function More() {
   return (
     <div className="max-w-lg mx-auto">
       <div className="card mb-4 flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-brand-700 text-white flex items-center justify-center text-xl font-bold">
+        <div className="w-12 h-12 rounded-full text-white flex items-center justify-center text-xl font-bold shrink-0"
+          style={{ background: 'linear-gradient(135deg,#d946ef,#7c3aed)', boxShadow: '0 0 14px rgba(217,70,239,.5)' }}>
           {(profile?.full_name ?? '?')[0]}
         </div>
         <div className="min-w-0">
@@ -41,8 +42,8 @@ export default function More() {
       <div className="card p-0 overflow-hidden mb-4">
         {links.map((l) => (
           <Link key={l.to} to={l.to}
-            className="flex items-center gap-3 px-4 py-3 border-b border-stone-100 last:border-0 hover:bg-brand-50">
-            <span className="text-xl">{l.icon}</span>
+            className="flex items-center gap-3 px-4 py-2.5 border-b border-stone-100 last:border-0 hover:bg-brand-50">
+            <span className={`tile ${l.tile} w-9 h-9 text-lg`}>{l.icon}</span>
             <span className="flex-1 font-medium">{l.label}</span>
             <span className="text-stone-300">›</span>
           </Link>
@@ -54,7 +55,7 @@ export default function More() {
         <div className="flex gap-2">
           {[{ code: 'en', label: 'English' }, { code: 'ml', label: 'മലയാളം' }].map((l) => (
             <button key={l.code} onClick={() => changeLang(l.code)}
-              className={`btn flex-1 ${i18n.language === l.code ? 'bg-brand-700 text-white' : 'bg-white border border-stone-300'}`}>
+              className={`btn flex-1 ${i18n.language === l.code ? 'bg-brand-700 text-white' : 'bg-surface border border-stone-300'}`}>
               {l.label}
             </button>
           ))}
