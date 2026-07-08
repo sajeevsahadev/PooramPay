@@ -70,6 +70,12 @@
     "admin": "Admin Console",
     "subscriptions": "Weekly Collection"
   },
+  "update": {
+    "available": "A new version is available",
+    "help": "Update now to get the latest features and fixes.",
+    "now": "Update",
+    "later": "Later"
+  },
   "auth": {
     "signInWithGoogle": "Sign in with Google",
     "signingIn": "Signing in...",

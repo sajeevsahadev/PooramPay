@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'PooramPay',
@@ -26,9 +26,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallbackDenylist: [/^\/auth/],
-        // apply new versions immediately instead of waiting for all tabs to close
+        // don't auto-activate; the in-app "Update now" prompt controls skipWaiting
         clientsClaim: true,
-        skipWaiting: true,
       },
     }),
   ],
