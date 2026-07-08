@@ -17,10 +17,16 @@ function getPosition(): Promise<{ lat: number; lng: number }> {
   });
 }
 
+const EMPTY_FORM = {
+  name: '', owner: '', phone: '', email: '', areaId: '', sub: false,
+  lat: null as number | null, lng: null as number | null,
+};
+
 export default function Areas() {
   const { t } = useTranslation();
-  const { currentProgramId, isCommitteeAdmin, frozen, can } = useApp();
+  const { currentProgramId, currentProgram, isCommitteeAdmin, frozen, can } = useApp();
   const { unit, units } = useUnits();
+  const weekly = !!currentProgram?.weekly_amount;
   const [areas, setAreas] = useState<Area[]>([]);
   const [houses, setHouses] = useState<House[]>([]);
   const [members, setMembers] = useState<Membership[]>([]);
@@ -29,7 +35,7 @@ export default function Areas() {
   const [areaName, setAreaName] = useState('');
   const [editArea, setEditArea] = useState<Area | null>(null);
 
-  // quick add
+  // quick add (bulk / rapid)
   const [showQuick, setShowQuick] = useState(false);
   const [qArea, setQArea] = useState('');
   const [qName, setQName] = useState('');
@@ -40,13 +46,11 @@ export default function Areas() {
   const [bulk, setBulk] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
 
-  // edit entry
-  const [editing, setEditing] = useState<House | null>(null);
-  const [eForm, setEForm] = useState({
-    name: '', owner: '', phone: '', email: '', areaId: '', sub: false,
-    lat: null as number | null, lng: null as number | null,
-  });
+  // single entry add / edit
+  const [entry, setEntry] = useState<{ mode: 'add' | 'edit'; house?: House } | null>(null);
+  const [form, setForm] = useState({ ...EMPTY_FORM });
   const [gpsBusy, setGpsBusy] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const load = async () => {
     if (!currentProgramId) return;
@@ -61,6 +65,10 @@ export default function Areas() {
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [currentProgramId]);
 
+  const countIn = (areaId: string | null) => houses.filter((h) => h.area_id === areaId).length;
+  const activeAreas = areas.filter((a) => a.is_active);
+  const inactiveAreas = areas.filter((a) => !a.is_active);
+
   const saveArea = async () => {
     try {
       await supabase.from('areas').insert({ program_id: currentProgramId, name: areaName.trim() }).throwOnError();
@@ -69,25 +77,36 @@ export default function Areas() {
     } catch (e) { setErr(friendlyError(e)); }
   };
 
+  const setAreaActive = async (a: Area, active: boolean) => {
+    if (!active && !window.confirm(t('setup.confirmDeactivate'))) return;
+    try {
+      await supabase.from('areas').update({ is_active: active }).eq('id', a.id).throwOnError();
+      await load();
+    } catch (e) { setErr(friendlyError(e)); }
+  };
+
+  const deleteArea = async (a: Area) => {
+    if (countIn(a.id) > 0) { setErr(t('setup.areaNotEmpty')); return; }
+    if (!window.confirm(t('setup.confirmDeleteArea'))) return;
+    try {
+      await supabase.from('areas').delete().eq('id', a.id).throwOnError();
+      await load();
+    } catch (e) { setErr(friendlyError(e)); }
+  };
+
+  // ---- quick add ----
   const quickSave = async () => {
     const name = qName.trim();
     if (!name || qBusy) return;
     setQBusy(true); setErr(null);
     try {
       let gps: { lat: number; lng: number } | null = null;
-      if (qGps) {
-        try { gps = await getPosition(); } catch { setErr(t('setup.gpsError')); }
-      }
+      if (qGps) { try { gps = await getPosition(); } catch { setErr(t('setup.gpsError')); } }
       await supabase.from('houses').insert({
-        program_id: currentProgramId,
-        area_id: qArea || null,
-        name,
-        phone: qPhone.trim() || null,
-        gps_lat: gps?.lat ?? null,
-        gps_lng: gps?.lng ?? null,
+        program_id: currentProgramId, area_id: qArea || null, name,
+        phone: qPhone.trim() || null, gps_lat: gps?.lat ?? null, gps_lng: gps?.lng ?? null,
       }).throwOnError();
-      setQCount((c) => c + 1);
-      setQName(''); setQPhone('');
+      setQCount((c) => c + 1); setQName(''); setQPhone('');
       nameRef.current?.focus();
     } catch (e) { setErr(friendlyError(e)); }
     setQBusy(false);
@@ -106,62 +125,68 @@ export default function Areas() {
       for (let i = 0; i < bulkRows.length; i += 200) {
         await supabase.from('houses').insert(
           bulkRows.slice(i, i + 200).map((r) => ({
-            program_id: currentProgramId,
-            area_id: qArea || null,
-            name: r.name,
-            owner_name: r.owner,
-            phone: r.phone,
-            email: r.email,
+            program_id: currentProgramId, area_id: qArea || null,
+            name: r.name, owner_name: r.owner, phone: r.phone, email: r.email,
           })),
         ).throwOnError();
       }
-      setQCount((c) => c + bulkRows.length);
-      setBulk('');
+      setQCount((c) => c + bulkRows.length); setBulk('');
       await load();
     } catch (e) { setErr(friendlyError(e)); }
     setQBusy(false);
   };
 
+  // ---- single entry add / edit ----
+  const openAdd = (areaId: string) => {
+    setForm({ ...EMPTY_FORM, areaId });
+    setEntry({ mode: 'add' });
+  };
   const openEdit = (h: House) => {
-    setEditing(h);
-    setEForm({
+    setForm({
       name: h.name, owner: h.owner_name ?? '', phone: h.phone ?? '', email: h.email ?? '',
       areaId: h.area_id ?? '', sub: h.in_subscription, lat: h.gps_lat, lng: h.gps_lng,
     });
+    setEntry({ mode: 'edit', house: h });
   };
 
-  const saveEdit = async () => {
-    if (!editing) return;
+  const saveEntry = async () => {
+    if (!form.name.trim() || busy) return;
+    setBusy(true); setErr(null);
+    const payload = {
+      name: form.name.trim(),
+      owner_name: form.owner.trim() || null,
+      phone: form.phone.trim() || null,
+      email: form.email.trim() || null,
+      area_id: form.areaId || null,
+      in_subscription: form.sub,
+      gps_lat: form.lat,
+      gps_lng: form.lng,
+    };
     try {
-      await supabase.from('houses').update({
-        name: eForm.name.trim(),
-        owner_name: eForm.owner.trim() || null,
-        phone: eForm.phone.trim() || null,
-        email: eForm.email.trim() || null,
-        area_id: eForm.areaId || null,
-        in_subscription: eForm.sub,
-        gps_lat: eForm.lat,
-        gps_lng: eForm.lng,
-      }).eq('id', editing.id).throwOnError();
-      setEditing(null);
+      if (entry?.mode === 'edit' && entry.house) {
+        await supabase.from('houses').update(payload).eq('id', entry.house.id).throwOnError();
+      } else {
+        await supabase.from('houses').insert({ program_id: currentProgramId, ...payload }).throwOnError();
+      }
+      setEntry(null);
       await load();
     } catch (e) { setErr(friendlyError(e)); }
+    setBusy(false);
   };
 
   const pinGps = async () => {
     setGpsBusy(true);
-    try {
-      const p = await getPosition();
-      setEForm((f) => ({ ...f, lat: p.lat, lng: p.lng }));
-    } catch { setErr(t('setup.gpsError')); }
+    try { const p = await getPosition(); setForm((f) => ({ ...f, lat: p.lat, lng: p.lng })); }
+    catch { setErr(t('setup.gpsError')); }
     setGpsBusy(false);
   };
 
   const removeEntry = async () => {
-    if (!editing || !window.confirm(`${t('common.delete')}: ${editing.name}?`)) return;
+    if (entry?.mode !== 'edit' || !entry.house) return;
+    if (!window.confirm(`${t('common.delete')}: ${entry.house.name}?`)) return;
     try {
-      await supabase.from('houses').delete().eq('id', editing.id).throwOnError();
-      setEditing(null);
+      await supabase.from('houses').delete().eq('id', entry.house.id).throwOnError();
+      setEntry(null);
       await load();
     } catch (e) { setErr(friendlyError(e)); }
   };
@@ -191,6 +216,59 @@ export default function Areas() {
     </button>
   );
 
+  const AreaCard = ({ a }: { a: Area }) => {
+    const n = countIn(a.id);
+    return (
+      <div className={`card mb-3 ${a.is_active ? '' : 'opacity-70'}`}>
+        <div className="flex justify-between items-start gap-2 flex-wrap">
+          <div className="min-w-0">
+            <div className="font-bold flex items-center gap-2">
+              {a.name}
+              {!a.is_active && <span className="chip-gray">{t('setup.inactive')}</span>}
+            </div>
+            <div className="text-xs text-stone-500">
+              {units}: {n}
+              {a.assigned_member_ids.length > 0 && (
+                <> · 👤 {a.assigned_member_ids.map(memberName).join(', ')}</>
+              )}
+            </div>
+          </div>
+          {isCommitteeAdmin && !frozen && (
+            <div className="flex flex-wrap gap-1.5 justify-end">
+              {can('collect') && a.is_active && (
+                <button className="btn-primary text-xs px-2.5 py-1.5" onClick={() => openAdd(a.id)}>
+                  ＋ {unit}
+                </button>
+              )}
+              <button className="btn-secondary text-xs px-2.5 py-1.5" onClick={() => setEditArea(a)}>
+                👥 {t('setup.team')}
+              </button>
+              {a.is_active ? (
+                <button className="btn-secondary text-xs px-2.5 py-1.5" onClick={() => setAreaActive(a, false)}>
+                  🚫
+                </button>
+              ) : (
+                <button className="btn-secondary text-xs px-2.5 py-1.5" onClick={() => setAreaActive(a, true)}>
+                  ✓ {t('setup.activate')}
+                </button>
+              )}
+              <button className={`btn-secondary text-xs px-2.5 py-1.5 ${n > 0 ? 'opacity-40' : 'text-red-600'}`}
+                title={n > 0 ? t('setup.areaNotEmpty') : t('setup.deleteArea')}
+                onClick={() => deleteArea(a)}>
+                🗑
+              </button>
+            </div>
+          )}
+        </div>
+        {n > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {houses.filter((h) => h.area_id === a.id).map((h) => <Chip key={h.id} h={h} />)}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const unassigned = houses.filter((h) => !h.area_id);
 
   return (
@@ -214,43 +292,103 @@ export default function Areas() {
       <ErrorNote msg={err} />
       {areas.length === 0 && unassigned.length === 0 && <Empty />}
 
-      {areas.map((a) => (
-        <div key={a.id} className="card mb-3">
+      {activeAreas.map((a) => <AreaCard key={a.id} a={a} />)}
+
+      {unassigned.length > 0 && (
+        <div className="card mb-3">
           <div className="flex justify-between items-center">
-            <div>
-              <div className="font-bold">{a.name}</div>
-              <div className="text-xs text-stone-500">
-                {units}: {houses.filter((h) => h.area_id === a.id).length}
-                {a.assigned_member_ids.length > 0 && (
-                  <> · 👤 {a.assigned_member_ids.map(memberName).join(', ')}</>
-                )}
-              </div>
-            </div>
-            {isCommitteeAdmin && !frozen && (
-              <button className="btn-secondary text-xs" onClick={() => setEditArea(a)}>{t('setup.assignTeam')}</button>
+            <div className="font-semibold text-sm text-stone-500">—</div>
+            {can('collect') && !frozen && (
+              <button className="btn-primary text-xs px-2.5 py-1.5" onClick={() => openAdd('')}>
+                ＋ {unit}
+              </button>
             )}
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {houses.filter((h) => h.area_id === a.id).map((h) => <Chip key={h.id} h={h} />)}
-          </div>
-        </div>
-      ))}
-
-      {unassigned.length > 0 && (
-        <div className="card">
-          <div className="font-semibold text-sm text-stone-500 mb-2">—</div>
-          <div className="flex flex-wrap gap-1.5">
             {unassigned.map((h) => <Chip key={h.id} h={h} />)}
           </div>
         </div>
       )}
 
+      {inactiveAreas.length > 0 && (
+        <>
+          <div className="text-sm font-semibold text-stone-500 mt-6 mb-2">
+            {t('setup.inactiveAreas')} ({inactiveAreas.length})
+          </div>
+          {inactiveAreas.map((a) => <AreaCard key={a.id} a={a} />)}
+        </>
+      )}
+
       {showArea && (
         <Modal title={t('setup.newArea')} onClose={() => setShowArea(false)}>
           <Field label={t('common.name')}>
-            <input value={areaName} onChange={(e) => setAreaName(e.target.value)} placeholder="Ward 1" />
+            <input value={areaName} onChange={(e) => setAreaName(e.target.value)} placeholder="Ward 1" autoFocus />
           </Field>
           <button className="btn-primary w-full" disabled={!areaName.trim()} onClick={saveArea}>{t('common.save')}</button>
+        </Modal>
+      )}
+
+      {/* single entry add/edit — full details incl. person name, email, GPS */}
+      {entry && (
+        <Modal
+          title={entry.mode === 'add' ? t('collect.addUnit', { unit }) : `${t('setup.editEntry')} — ${entry.house?.name}`}
+          onClose={() => setEntry(null)}>
+          <Field label={t('collect.unitName', { unit })}>
+            <input value={form.name} autoFocus
+              onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          </Field>
+          <Field label={t('setup.houseOwner')} hint={t('setup.personHint')}>
+            <input value={form.owner} onChange={(e) => setForm({ ...form, owner: e.target.value })} />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t('common.phone')}>
+              <input type="tel" inputMode="tel" value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            </Field>
+            <Field label={t('setup.email')}>
+              <input type="email" inputMode="email" value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            </Field>
+          </div>
+          <Field label={t('setup.area')}>
+            <select value={form.areaId} onChange={(e) => setForm({ ...form, areaId: e.target.value })}>
+              <option value="">—</option>
+              {activeAreas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
+          </Field>
+          {weekly && (
+            <label className="flex items-center gap-2 mb-3 text-sm">
+              <input type="checkbox" className="w-5 h-5 min-h-0" checked={form.sub}
+                onChange={(e) => setForm({ ...form, sub: e.target.checked })} />
+              📅 {t('collect.subscription')}
+            </label>
+          )}
+
+          <div className="card bg-stone-50 p-3 mb-3">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <button className="btn-secondary text-sm" disabled={gpsBusy} onClick={pinGps}>
+                📍 {gpsBusy ? t('common.loading') : t('setup.pinGps')}
+              </button>
+              {form.lat != null && form.lng != null && (
+                <span className="text-xs text-stone-600">
+                  ✓ {t('setup.gpsAttached')} ·{' '}
+                  <a className="text-brand-700 underline font-semibold" target="_blank" rel="noreferrer"
+                    href={`https://maps.google.com/?q=${form.lat},${form.lng}`}>
+                    🗺️ {t('setup.openMap')}
+                  </a>
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <button className="btn-primary flex-1" onClick={saveEntry} disabled={busy || !form.name.trim()}>
+              {t('common.save')}
+            </button>
+            {entry.mode === 'edit' && isCommitteeAdmin && (
+              <button className="btn-danger px-3" onClick={removeEntry}>🗑</button>
+            )}
+          </div>
         </Modal>
       )}
 
@@ -260,7 +398,7 @@ export default function Areas() {
           <Field label={t('setup.area')}>
             <select value={qArea} onChange={(e) => setQArea(e.target.value)}>
               <option value="">—</option>
-              {areas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+              {activeAreas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
           </Field>
           <form onSubmit={(e) => { e.preventDefault(); quickSave(); }}>
@@ -298,64 +436,6 @@ export default function Areas() {
         </Modal>
       )}
 
-      {editing && (
-        <Modal title={`${t('setup.editEntry')} — ${editing.name}`} onClose={() => setEditing(null)}>
-          <Field label={t('collect.unitName', { unit })}>
-            <input value={eForm.name} onChange={(e) => setEForm({ ...eForm, name: e.target.value })} />
-          </Field>
-          <Field label={t('setup.houseOwner')}>
-            <input value={eForm.owner} onChange={(e) => setEForm({ ...eForm, owner: e.target.value })} />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label={t('common.phone')}>
-              <input type="tel" inputMode="tel" value={eForm.phone}
-                onChange={(e) => setEForm({ ...eForm, phone: e.target.value })} />
-            </Field>
-            <Field label="Email">
-              <input type="email" value={eForm.email}
-                onChange={(e) => setEForm({ ...eForm, email: e.target.value })} />
-            </Field>
-          </div>
-          <Field label={t('setup.area')}>
-            <select value={eForm.areaId} onChange={(e) => setEForm({ ...eForm, areaId: e.target.value })}>
-              <option value="">—</option>
-              {areas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-            </select>
-          </Field>
-          <label className="flex items-center gap-2 mb-3 text-sm">
-            <input type="checkbox" className="w-5 h-5 min-h-0" checked={eForm.sub}
-              onChange={(e) => setEForm({ ...eForm, sub: e.target.checked })} />
-            📅 {t('collect.subscription')}
-          </label>
-
-          <div className="card bg-stone-50 p-3 mb-3">
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <button className="btn-secondary text-sm" disabled={gpsBusy} onClick={pinGps}>
-                📍 {gpsBusy ? t('common.loading') : t('setup.pinGps')}
-              </button>
-              {eForm.lat != null && eForm.lng != null && (
-                <span className="text-xs text-stone-600">
-                  ✓ {t('setup.gpsAttached')} ·{' '}
-                  <a className="text-brand-700 underline font-semibold" target="_blank" rel="noreferrer"
-                    href={`https://maps.google.com/?q=${eForm.lat},${eForm.lng}`}>
-                    🗺️ {t('setup.openMap')}
-                  </a>
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <button className="btn-primary flex-1" onClick={saveEdit} disabled={!eForm.name.trim()}>
-              {t('common.save')}
-            </button>
-            {isCommitteeAdmin && (
-              <button className="btn-danger px-3" onClick={removeEntry}>🗑</button>
-            )}
-          </div>
-        </Modal>
-      )}
-
       {editArea && (
         <Modal title={`${t('setup.assignTeam')} — ${editArea.name}`} onClose={() => setEditArea(null)}>
           <div className="space-y-2">
@@ -370,6 +450,7 @@ export default function Areas() {
                 </button>
               );
             })}
+            {members.length === 0 && <Empty />}
           </div>
         </Modal>
       )}

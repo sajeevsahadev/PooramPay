@@ -67,6 +67,7 @@ export interface Area {
   program_id: string;
   name: string;
   assigned_member_ids: string[];
+  is_active: boolean;
 }
 
 export interface House {

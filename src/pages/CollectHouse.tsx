@@ -22,11 +22,11 @@ export default function CollectHouse() {
   const [busy, setBusy] = useState(false);
   const [receipt, setReceipt] = useState<{ no: number; amount: number } | null>(null);
   const [addHouse, setAddHouse] = useState(false);
-  const [newHouse, setNewHouse] = useState({ name: '', owner: '', phone: '' });
+  const [newHouse, setNewHouse] = useState({ name: '', owner: '', phone: '', email: '' });
 
   useEffect(() => {
     if (!currentProgramId) return;
-    supabase.from('areas').select('*').eq('program_id', currentProgramId).order('name')
+    supabase.from('areas').select('*').eq('program_id', currentProgramId).eq('is_active', true).order('name')
       .then(({ data }) => setAreas((data ?? []) as Area[]));
     supabase.from('houses').select('*').eq('program_id', currentProgramId).order('sort_order').order('name')
       .then(({ data }) => setHouses((data ?? []) as House[]));
@@ -67,13 +67,13 @@ export default function CollectHouse() {
     const { data, error } = await supabase.from('houses').insert({
       program_id: currentProgramId, area_id: areaId || null,
       name: newHouse.name.trim(), owner_name: newHouse.owner.trim() || null,
-      phone: newHouse.phone.trim() || null,
+      phone: newHouse.phone.trim() || null, email: newHouse.email.trim() || null,
     }).select('*').single();
     if (!error && data) {
       setHouses((p) => [...p, data as House]);
       setHouseId((data as House).id);
-      setAddHouse(false); setNewHouse({ name: '', owner: '', phone: '' });
-    }
+      setAddHouse(false); setNewHouse({ name: '', owner: '', phone: '', email: '' });
+    } else if (error) { setErr(friendlyError(error)); }
   };
 
   return (
@@ -154,16 +154,25 @@ export default function CollectHouse() {
       {addHouse && (
         <Modal title={t('collect.addUnit', { unit })} onClose={() => setAddHouse(false)}>
           <Field label={t('collect.unitName', { unit })}>
-            <input value={newHouse.name} onChange={(e) => setNewHouse({ ...newHouse, name: e.target.value })} />
+            <input value={newHouse.name} autoFocus
+              onChange={(e) => setNewHouse({ ...newHouse, name: e.target.value })} />
           </Field>
-          <Field label={t('setup.houseOwner')}>
+          <Field label={t('setup.houseOwner')} hint={t('setup.personHint')}>
             <input value={newHouse.owner} onChange={(e) => setNewHouse({ ...newHouse, owner: e.target.value })} />
           </Field>
-          <Field label={`${t('common.phone')} (${t('common.optional')})`}>
-            <input type="tel" inputMode="tel" value={newHouse.phone}
-              onChange={(e) => setNewHouse({ ...newHouse, phone: e.target.value })} />
-          </Field>
-          <button className="btn-primary w-full" onClick={saveHouse}>{t('common.save')}</button>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={`${t('common.phone')} (${t('common.optional')})`}>
+              <input type="tel" inputMode="tel" value={newHouse.phone}
+                onChange={(e) => setNewHouse({ ...newHouse, phone: e.target.value })} />
+            </Field>
+            <Field label={`${t('setup.email')} (${t('common.optional')})`}>
+              <input type="email" inputMode="email" value={newHouse.email}
+                onChange={(e) => setNewHouse({ ...newHouse, email: e.target.value })} />
+            </Field>
+          </div>
+          <button className="btn-primary w-full" disabled={!newHouse.name.trim()} onClick={saveHouse}>
+            {t('common.save')}
+          </button>
         </Modal>
       )}
     </div>

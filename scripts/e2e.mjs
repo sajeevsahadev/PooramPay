@@ -241,6 +241,22 @@ ok('copied entry keeps GPS + contact', h2?.length === 1 && h2[0].gps_lat === 10.
 await expectError('collector cannot copy register',
   collector.client.rpc('copy_register', { p_from: pid, p_to: prog2.id }), 'NOT_ALLOWED');
 
+console.log('== area lifecycle (deactivate / delete) ==');
+const { error: deactErr } = await admin.client.from('areas')
+  .update({ is_active: false }).eq('id', area.id);
+ok('admin can deactivate an area', !deactErr, deactErr?.message);
+const { data: areaRow } = await admin.client.from('areas').select('is_active').eq('id', area.id).single();
+ok('area marked inactive', areaRow?.is_active === false);
+await expectError('cannot delete a non-empty area',
+  admin.client.from('areas').delete().eq('id', area.id), 'AREA_NOT_EMPTY');
+const { data: emptyArea } = await admin.client.from('areas')
+  .insert({ program_id: pid, name: 'E2E Empty Ward' }).select().single();
+const { error: delEmptyErr } = await admin.client.from('areas').delete().eq('id', emptyArea.id);
+ok('can delete an empty area', !delEmptyErr, delEmptyErr?.message);
+const { data: goneArea } = await admin.client.from('areas').select('id').eq('id', emptyArea.id);
+ok('deleted area is gone', (goneArea?.length ?? 0) === 0);
+await admin.client.from('areas').update({ is_active: true }).eq('id', area.id); // restore for later checks
+
 console.log('== freeze ==');
 const { error: frErr } = await admin.client.from('programs').update({ status: 'frozen' }).eq('id', pid);
 ok('committee admin freezes program', !frErr, frErr?.message);
