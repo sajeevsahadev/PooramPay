@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase, fmtINR, fmtDate } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { Empty } from '../components/ui';
+import { incomeTypeLabel, useUnits } from '../lib/units';
 import type { BudgetItem, CouponBook, ExpenseHead } from '../lib/types';
 
 type Tab = 'pnl' | 'cashbook' | 'budget' | 'coupon';
@@ -14,6 +15,7 @@ interface CashRow { date: string; created: string; label: string; inAmt: number;
 export default function Reports() {
   const { t, i18n } = useTranslation();
   const { currentProgramId, finance, currentProgram } = useApp();
+  const { unit } = useUnits();
   const [tab, setTab] = useState<Tab>('pnl');
   const [incomeByType, setIncomeByType] = useState<Map<string, number>>(new Map());
   const [expenseByHead, setExpenseByHead] = useState<Map<string, number>>(new Map());
@@ -66,7 +68,7 @@ export default function Reports() {
     ]);
     const inc = (i.data ?? []).map((r) => ({
       date: r.entry_date as string, created: r.created_at as string,
-      label: `${t('collect.' + r.entry_type)}${r.payer_name ? ' · ' + r.payer_name : ''} #${r.receipt_no ?? ''}`,
+      label: `${incomeTypeLabel(t, r.entry_type, unit)}${r.payer_name ? ' · ' + r.payer_name : ''} #${r.receipt_no ?? ''}`,
       inAmt: Number(r.amount), outAmt: 0,
     }));
     const exp = (e.data ?? []).map((r) => ({
@@ -105,7 +107,7 @@ export default function Reports() {
     for (const ty of INCOME_TYPES) {
       const planned = Number(budget.find((b) => b.side === 'income' && b.income_type === ty)?.planned ?? 0);
       const actual = incomeByType.get(ty) ?? 0;
-      if (planned || actual) rows.push({ label: `▲ ${t('collect.' + ty)}`, planned, actual });
+      if (planned || actual) rows.push({ label: `▲ ${incomeTypeLabel(t, ty, unit)}`, planned, actual });
     }
     for (const h of heads) {
       const planned = Number(budget.find((b) => b.side === 'expense' && b.head_id === h.id)?.planned ?? 0);
@@ -156,7 +158,7 @@ export default function Reports() {
                 if (!v) return null;
                 return (
                   <tr key={ty} className="border-b border-stone-50">
-                    <td className="py-1.5 pl-4">{t('collect.' + ty)}</td>
+                    <td className="py-1.5 pl-4">{incomeTypeLabel(t, ty, unit)}</td>
                     <td className="py-1.5 text-right money">{fmtINR(v)}</td>
                   </tr>
                 );

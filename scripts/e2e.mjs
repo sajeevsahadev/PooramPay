@@ -224,6 +224,23 @@ const { error: budErr } = await admin.client.from('budget_items').insert([
 ]);
 ok('budget items saved', !budErr, budErr?.message);
 
+console.log('== register master data & copy-forward ==');
+const { error: gpsErr } = await collector.client.from('houses')
+  .update({ gps_lat: 10.5276, gps_lng: 76.2144, email: 'raman@example.com', phone: '9847000000' })
+  .eq('id', house.id);
+ok('collector updates register master data (GPS/email)', !gpsErr, gpsErr?.message);
+const { data: prog2, error: p2Err } = await admin.client.from('programs')
+  .insert({ committee_id: com.id, name: 'E2E Utsavam', year: 2027, opening_balance: 0,
+            unit_label: 'member', created_by: admin.id }).select().single();
+ok('create next-year program with unit_label', !p2Err && prog2?.unit_label === 'member', p2Err?.message);
+const { data: copied, error: cpErr } = await admin.client.rpc('copy_register', { p_from: pid, p_to: prog2.id });
+ok('copy register to next year', !cpErr && Number(copied) === 1, cpErr?.message ?? `count=${copied}`);
+const { data: h2 } = await admin.client.from('houses').select('*').eq('program_id', prog2.id);
+ok('copied entry keeps GPS + contact', h2?.length === 1 && h2[0].gps_lat === 10.5276
+  && h2[0].email === 'raman@example.com' && h2[0].area_id != null, JSON.stringify(h2?.[0] ?? {}));
+await expectError('collector cannot copy register',
+  collector.client.rpc('copy_register', { p_from: pid, p_to: prog2.id }), 'NOT_ALLOWED');
+
 console.log('== freeze ==');
 const { error: frErr } = await admin.client.from('programs').update({ status: 'frozen' }).eq('id', pid);
 ok('committee admin freezes program', !frErr, frErr?.message);

@@ -3,11 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { supabase, fmtINR } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { Field, ErrorNote, friendlyError, Modal } from '../components/ui';
+import { useUnits } from '../lib/units';
 import type { Area, House } from '../lib/types';
 
 export default function CollectHouse() {
   const { t } = useTranslation();
   const { currentProgramId, session, refreshFinance } = useApp();
+  const { unit, label } = useUnits();
   const [areas, setAreas] = useState<Area[]>([]);
   const [houses, setHouses] = useState<House[]>([]);
   const [areaId, setAreaId] = useState('');
@@ -20,7 +22,7 @@ export default function CollectHouse() {
   const [busy, setBusy] = useState(false);
   const [receipt, setReceipt] = useState<{ no: number; amount: number } | null>(null);
   const [addHouse, setAddHouse] = useState(false);
-  const [newHouse, setNewHouse] = useState({ name: '', owner: '' });
+  const [newHouse, setNewHouse] = useState({ name: '', owner: '', phone: '' });
 
   useEffect(() => {
     if (!currentProgramId) return;
@@ -65,17 +67,20 @@ export default function CollectHouse() {
     const { data, error } = await supabase.from('houses').insert({
       program_id: currentProgramId, area_id: areaId || null,
       name: newHouse.name.trim(), owner_name: newHouse.owner.trim() || null,
+      phone: newHouse.phone.trim() || null,
     }).select('*').single();
     if (!error && data) {
       setHouses((p) => [...p, data as House]);
       setHouseId((data as House).id);
-      setAddHouse(false); setNewHouse({ name: '', owner: '' });
+      setAddHouse(false); setNewHouse({ name: '', owner: '', phone: '' });
     }
   };
 
   return (
     <div className="max-w-lg mx-auto">
-      <h1 className="text-xl font-bold mb-4">🏠 {t('collect.house')}</h1>
+      <h1 className="text-xl font-bold mb-4">
+        {label === 'house' ? '🏠' : '🧑‍🤝‍🧑'} {t('collect.unitCollection', { unit })}
+      </h1>
       <ErrorNote msg={err} />
 
       {receipt && (
@@ -95,7 +100,7 @@ export default function CollectHouse() {
             {areas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
         </Field>
-        <Field label={t('collect.selectHouse')}>
+        <Field label={t('collect.selectUnit', { unit })}>
           <div className="flex gap-2">
             <select value={houseId} onChange={(e) => setHouseId(e.target.value)}>
               <option value="">— {t('common.optional')} —</option>
@@ -105,6 +110,21 @@ export default function CollectHouse() {
             </select>
             <button className="btn-secondary shrink-0 px-3" onClick={() => setAddHouse(true)}>＋</button>
           </div>
+          {(() => {
+            const h = houses.find((x) => x.id === houseId);
+            if (!h) return null;
+            return (
+              <span className="block text-xs text-stone-500 mt-1">
+                {h.phone && <>📞 <a className="underline" href={`tel:${h.phone}`}>{h.phone}</a>{' '}</>}
+                {h.gps_lat != null && h.gps_lng != null && (
+                  <a className="text-brand-700 underline font-semibold" target="_blank" rel="noreferrer"
+                    href={`https://maps.google.com/?q=${h.gps_lat},${h.gps_lng}`}>
+                    🗺️ {t('setup.openMap')}
+                  </a>
+                )}
+              </span>
+            );
+          })()}
         </Field>
         <Field label={t('collect.payerName')}>
           <input value={payer} onChange={(e) => setPayer(e.target.value)} />
@@ -132,12 +152,16 @@ export default function CollectHouse() {
       </div>
 
       {addHouse && (
-        <Modal title={t('setup.newHouse')} onClose={() => setAddHouse(false)}>
-          <Field label={t('collect.houseName')}>
+        <Modal title={t('collect.addUnit', { unit })} onClose={() => setAddHouse(false)}>
+          <Field label={t('collect.unitName', { unit })}>
             <input value={newHouse.name} onChange={(e) => setNewHouse({ ...newHouse, name: e.target.value })} />
           </Field>
           <Field label={t('setup.houseOwner')}>
             <input value={newHouse.owner} onChange={(e) => setNewHouse({ ...newHouse, owner: e.target.value })} />
+          </Field>
+          <Field label={`${t('common.phone')} (${t('common.optional')})`}>
+            <input type="tel" inputMode="tel" value={newHouse.phone}
+              onChange={(e) => setNewHouse({ ...newHouse, phone: e.target.value })} />
           </Field>
           <button className="btn-primary w-full" onClick={saveHouse}>{t('common.save')}</button>
         </Modal>

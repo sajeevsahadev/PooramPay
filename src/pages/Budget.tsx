@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { ErrorNote, friendlyError } from '../components/ui';
+import { incomeTypeLabel, useUnits } from '../lib/units';
 import type { BudgetItem, ExpenseHead } from '../lib/types';
 
 const INCOME_TYPES = ['house', 'coupon', 'subscription', 'interest', 'ad_brochure', 'ad_stage', 'donation'];
@@ -10,6 +11,7 @@ const INCOME_TYPES = ['house', 'coupon', 'subscription', 'interest', 'ad_brochur
 export default function Budget() {
   const { t, i18n } = useTranslation();
   const { currentProgramId, isCommitteeAdmin, frozen } = useApp();
+  const { unit } = useUnits();
   const [heads, setHeads] = useState<ExpenseHead[]>([]);
   const [items, setItems] = useState<BudgetItem[]>([]);
   const [values, setValues] = useState<Record<string, string>>({});
@@ -80,7 +82,7 @@ export default function Budget() {
 
       <div className="card mb-4">
         <div className="font-bold text-green-700 mb-2">{t('reports.income')} — ₹{totalIncome.toLocaleString('en-IN')}</div>
-        {INCOME_TYPES.map((ty) => <Row key={ty} k={`i:${ty}`} label={t('collect.' + ty)} />)}
+        {INCOME_TYPES.map((ty) => <Row key={ty} k={`i:${ty}`} label={incomeTypeLabel(t, ty, unit)} />)}
       </div>
       <div className="card mb-4">
         <div className="font-bold text-red-700 mb-2">{t('reports.expense')} — ₹{totalExpense.toLocaleString('en-IN')}</div>

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase, fmtINR, fmtDate } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { Empty, ErrorNote, friendlyError } from '../components/ui';
+import { incomeTypeLabel, useUnits } from '../lib/units';
 import type { Expense, IncomeEntry } from '../lib/types';
 
 interface DelRow {
@@ -14,6 +15,7 @@ interface DelRow {
 export default function DeletedTx() {
   const { t, i18n } = useTranslation();
   const { currentProgramId, isCommitteeAdmin, frozen, refreshFinance } = useApp();
+  const { unit } = useUnits();
   const [rows, setRows] = useState<DelRow[]>([]);
   const [err, setErr] = useState<string | null>(null);
 
@@ -28,7 +30,7 @@ export default function DeletedTx() {
     const list: DelRow[] = [
       ...((i.data ?? []) as IncomeEntry[]).map((r) => ({
         id: r.id, table: 'income_entries' as const,
-        label: `+ ${t('collect.' + r.entry_type)}${r.payer_name ? ' · ' + r.payer_name : ''}`,
+        label: `+ ${incomeTypeLabel(t, r.entry_type, unit)}${r.payer_name ? ' · ' + r.payer_name : ''}`,
         amount: r.amount, deleted_at: r.deleted_at!, delete_reason: r.delete_reason ?? '',
       })),
       ...((e.data ?? []) as Expense[]).map((r) => ({

@@ -5,6 +5,7 @@ import { supabase, fmtINR, fmtDate } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { friendlyError } from '../components/ui';
 import { Donut, MiniBars, Sparkline } from '../components/charts';
+import { incomeTypeLabel, useUnits } from '../lib/units';
 
 interface TxRow {
   id: string; kind: 'in' | 'out'; label: string; amount: number; date: string;
@@ -13,6 +14,7 @@ interface TxRow {
 export default function Dashboard() {
   const { t, i18n } = useTranslation();
   const { finance, current, currentProgramId, can, refreshFinance, session, frozen } = useApp();
+  const { unit } = useUnits();
   const [recent, setRecent] = useState<TxRow[]>([]);
   const [myCash, setMyCash] = useState(0);
   const [couponOut, setCouponOut] = useState(0);
@@ -60,7 +62,7 @@ export default function Dashboard() {
     const rows: TxRow[] = [
       ...(inc.data ?? []).map((r) => ({
         id: r.id, kind: 'in' as const,
-        label: `${t('collect.' + r.entry_type)}${r.payer_name ? ' · ' + r.payer_name : ''}`,
+        label: `${incomeTypeLabel(t, r.entry_type, unit)}${r.payer_name ? ' · ' + r.payer_name : ''}`,
         amount: r.amount, date: r.created_at,
       })),
       ...(exp.data ?? []).map((r) => ({
@@ -81,7 +83,7 @@ export default function Dashboard() {
     setBudgetExpense(((bud.data ?? []) as { side: string; planned: number }[])
       .filter((b) => b.side === 'expense').reduce((s, b) => s + Number(b.planned), 0));
     setIncomeByType(((byType.data ?? []) as { entry_type: string; total: number }[])
-      .map((r) => ({ label: t('collect.' + r.entry_type), value: Number(r.total) }))
+      .map((r) => ({ label: incomeTypeLabel(t, r.entry_type, unit), value: Number(r.total) }))
       .sort((a, b) => b.value - a.value).slice(0, 5));
 
     // fill missing days with zero so the sparkline shows real rhythm

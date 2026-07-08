@@ -25,6 +25,8 @@ export interface Committee {
   description: string | null;
 }
 
+export type UnitLabel = 'house' | 'member' | 'family' | 'shop' | 'unit';
+
 export interface Program {
   id: string;
   committee_id: string;
@@ -34,6 +36,7 @@ export interface Program {
   opening_balance: number;
   weekly_amount: number | null;
   total_weeks: number;
+  unit_label: UnitLabel;
   committees?: Committee & { organizations?: Organization };
 }
 
@@ -73,6 +76,9 @@ export interface House {
   name: string;
   owner_name: string | null;
   phone: string | null;
+  email: string | null;
+  gps_lat: number | null;
+  gps_lng: number | null;
   in_subscription: boolean;
 }
 

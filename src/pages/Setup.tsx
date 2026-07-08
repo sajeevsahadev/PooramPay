@@ -5,7 +5,13 @@ import { useApp } from '../state/AppContext';
 import { Field, ErrorNote, friendlyError, Modal, StatusChip } from '../components/ui';
 import type { Committee, Organization, Program } from '../lib/types';
 
-const ORG_TYPES = ['temple', 'church', 'mosque', 'college', 'cultural', 'other'];
+const ORG_TYPES = ['temple', 'church', 'mosque', 'college', 'cultural', 'club', 'association', 'political', 'other'];
+const UNIT_LABELS = ['house', 'member', 'family', 'shop', 'unit'] as const;
+// sensible default register type per organization type
+const DEFAULT_UNIT: Record<string, string> = {
+  temple: 'house', church: 'house', mosque: 'house', association: 'unit',
+  college: 'member', cultural: 'member', club: 'member', political: 'member', other: 'house',
+};
 
 /** Organization → Committee → yearly Program management, incl. freeze. */
 export default function Setup() {
@@ -23,7 +29,9 @@ export default function Setup() {
   const [comForm, setComForm] = useState({ name: '', desc: '' });
   const [progForm, setProgForm] = useState({
     name: '', year: String(new Date().getFullYear()), opening: '0', weekly: '', weeks: '52',
+    unitLabel: 'house', copyFrom: '' as string,
   });
+  const [copiedMsg, setCopiedMsg] = useState<string | null>(null);
 
   const load = async () => {
     const [o, c, p] = await Promise.all([
@@ -64,19 +72,26 @@ export default function Setup() {
   };
 
   const saveProgram = async () => {
-    setBusy(true); setErr(null);
+    setBusy(true); setErr(null); setCopiedMsg(null);
     try {
-      await supabase.from('programs').insert({
+      const { data: created } = await supabase.from('programs').insert({
         committee_id: showProgram!.id,
         name: progForm.name.trim() || showProgram!.name,
         year: parseInt(progForm.year),
         opening_balance: parseFloat(progForm.opening) || 0,
         weekly_amount: progForm.weekly ? parseFloat(progForm.weekly) : null,
         total_weeks: parseInt(progForm.weeks) || 52,
+        unit_label: progForm.unitLabel,
         created_by: session!.user.id,
-      }).throwOnError();
+      }).select('id').single().throwOnError();
+      if (progForm.copyFrom && created) {
+        const { data: count } = await supabase.rpc('copy_register', {
+          p_from: progForm.copyFrom, p_to: (created as { id: string }).id,
+        }).throwOnError();
+        setCopiedMsg(t('setup.copiedRegister', { count: count ?? 0 }));
+      }
       setShowProgram(null);
-      setProgForm({ name: '', year: String(new Date().getFullYear()), opening: '0', weekly: '', weeks: '52' });
+      setProgForm({ name: '', year: String(new Date().getFullYear()), opening: '0', weekly: '', weeks: '52', unitLabel: 'house', copyFrom: '' });
       await Promise.all([load(), refresh()]);
     } catch (e) { setErr(friendlyError(e)); }
     setBusy(false);
@@ -109,6 +124,11 @@ export default function Setup() {
         </button>
       </div>
       <ErrorNote msg={err} />
+      {copiedMsg && (
+        <div className="bg-green-50 border border-green-100 text-green-800 rounded-lg p-3 mb-3 text-sm">
+          ✓ {copiedMsg}
+        </div>
+      )}
 
       {orgs.map((org) => (
         <div key={org.id} className="card mb-4">
@@ -128,7 +148,17 @@ export default function Setup() {
               <div className="flex justify-between items-center">
                 <div className="font-semibold text-sm">🏛 {c.name}</div>
                 {(isPadmin || org.created_by === session!.user.id) && (
-                  <button className="text-brand-600 text-xs font-semibold" onClick={() => setShowProgram(c)}>
+                  <button className="text-brand-600 text-xs font-semibold"
+                    onClick={() => {
+                      const prev = programs.filter((p) => p.committee_id === c.id)
+                        .sort((a, b) => b.year - a.year)[0];
+                      setProgForm((f) => ({
+                        ...f,
+                        unitLabel: prev?.unit_label ?? DEFAULT_UNIT[org.org_type] ?? 'house',
+                        copyFrom: prev?.id ?? '',
+                      }));
+                      setShowProgram(c);
+                    }}>
                     ＋ {t('setup.newProgram')}
                   </button>
                 )}
@@ -213,6 +243,30 @@ export default function Setup() {
                 onChange={(e) => setProgForm({ ...progForm, weeks: e.target.value })} />
             </Field>
           </div>
+          <Field label={t('setup.registerType')}>
+            <div className="grid grid-cols-5 gap-1">
+              {UNIT_LABELS.map((u) => (
+                <button key={u} type="button"
+                  onClick={() => setProgForm({ ...progForm, unitLabel: u })}
+                  className={`btn text-xs px-1 ${progForm.unitLabel === u
+                    ? 'bg-brand-700 text-white' : 'bg-surface border border-stone-300'}`}>
+                  {t(`units.${u}.many`)}
+                </button>
+              ))}
+            </div>
+          </Field>
+          {(() => {
+            const prev = programs.filter((p) => p.committee_id === showProgram.id)
+              .sort((a, b) => b.year - a.year)[0];
+            if (!prev) return null;
+            return (
+              <label className="flex items-center gap-2 mb-3 text-sm">
+                <input type="checkbox" className="w-5 h-5 min-h-0" checked={!!progForm.copyFrom}
+                  onChange={(e) => setProgForm({ ...progForm, copyFrom: e.target.checked ? prev.id : '' })} />
+                📋 {t('setup.copyRegister', { name: prev.name, year: prev.year })}
+              </label>
+            );
+          })()}
           <button className="btn-primary w-full" disabled={busy} onClick={saveProgram}>
             {t('common.save')}
           </button>

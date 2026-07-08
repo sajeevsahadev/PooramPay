@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase, fmtINR, fmtDate } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { ErrorNote, friendlyError, Modal, Field, Empty } from '../components/ui';
+import { incomeTypeLabel, useUnits } from '../lib/units';
 import type { Expense, ExpenseHead, IncomeEntry } from '../lib/types';
 
 interface Row {
@@ -13,6 +14,7 @@ interface Row {
 export default function Transactions() {
   const { t, i18n } = useTranslation();
   const { currentProgramId, isCommitteeAdmin, frozen, refreshFinance } = useApp();
+  const { unit } = useUnits();
   const [income, setIncome] = useState<IncomeEntry[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [heads, setHeads] = useState<ExpenseHead[]>([]);
@@ -50,7 +52,7 @@ export default function Transactions() {
     const list: Row[] = [
       ...income.map((r) => ({
         id: r.id, table: 'income_entries' as const, kind: 'in' as const,
-        label: `${t('collect.' + r.entry_type)}${r.payer_name ? ' · ' + r.payer_name : ''}`,
+        label: `${incomeTypeLabel(t, r.entry_type, unit)}${r.payer_name ? ' · ' + r.payer_name : ''}`,
         sub: `#${r.receipt_no ?? ''}`,
         amount: r.amount, date: r.created_at, mode: r.mode,
       })),
