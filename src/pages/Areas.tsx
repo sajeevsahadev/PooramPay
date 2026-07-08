@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { useUnits } from '../lib/units';
 import { Field, ErrorNote, friendlyError, Modal, Empty } from '../components/ui';
+import GpsPin from '../components/GpsPin';
 import type { Area, House, Membership } from '../lib/types';
 
 function getPosition(): Promise<{ lat: number; lng: number }> {
@@ -12,7 +13,7 @@ function getPosition(): Promise<{ lat: number; lng: number }> {
     navigator.geolocation.getCurrentPosition(
       (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
       (e) => reject(e),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 15000 },
     );
   });
 }
@@ -49,7 +50,6 @@ export default function Areas() {
   // single entry add / edit
   const [entry, setEntry] = useState<{ mode: 'add' | 'edit'; house?: House } | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
-  const [gpsBusy, setGpsBusy] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
@@ -172,13 +172,6 @@ export default function Areas() {
       await load();
     } catch (e) { setErr(friendlyError(e)); }
     setBusy(false);
-  };
-
-  const pinGps = async () => {
-    setGpsBusy(true);
-    try { const p = await getPosition(); setForm((f) => ({ ...f, lat: p.lat, lng: p.lng })); }
-    catch { setErr(t('setup.gpsError')); }
-    setGpsBusy(false);
   };
 
   const removeEntry = async () => {
@@ -337,6 +330,8 @@ export default function Areas() {
             <input value={form.name} autoFocus
               onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </Field>
+          <GpsPin lat={form.lat} lng={form.lng} unit={unit}
+            onChange={(lat, lng) => setForm((f) => ({ ...f, lat, lng }))} onError={setErr} />
           <Field label={t('setup.houseOwner')} hint={t('setup.personHint')}>
             <input value={form.owner} onChange={(e) => setForm({ ...form, owner: e.target.value })} />
           </Field>
@@ -363,23 +358,6 @@ export default function Areas() {
               📅 {t('collect.subscription')}
             </label>
           )}
-
-          <div className="card bg-stone-50 p-3 mb-3">
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <button className="btn-secondary text-sm" disabled={gpsBusy} onClick={pinGps}>
-                📍 {gpsBusy ? t('common.loading') : t('setup.pinGps')}
-              </button>
-              {form.lat != null && form.lng != null && (
-                <span className="text-xs text-stone-600">
-                  ✓ {t('setup.gpsAttached')} ·{' '}
-                  <a className="text-brand-700 underline font-semibold" target="_blank" rel="noreferrer"
-                    href={`https://maps.google.com/?q=${form.lat},${form.lng}`}>
-                    🗺️ {t('setup.openMap')}
-                  </a>
-                </span>
-              )}
-            </div>
-          </div>
 
           <div className="flex gap-2">
             <button className="btn-primary flex-1" onClick={saveEntry} disabled={busy || !form.name.trim()}>

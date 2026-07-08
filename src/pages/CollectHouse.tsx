@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase, fmtINR } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { Field, ErrorNote, friendlyError, Modal } from '../components/ui';
+import GpsPin from '../components/GpsPin';
 import { useUnits } from '../lib/units';
 import type { Area, House } from '../lib/types';
 
@@ -22,7 +23,10 @@ export default function CollectHouse() {
   const [busy, setBusy] = useState(false);
   const [receipt, setReceipt] = useState<{ no: number; amount: number } | null>(null);
   const [addHouse, setAddHouse] = useState(false);
-  const [newHouse, setNewHouse] = useState({ name: '', owner: '', phone: '', email: '' });
+  const [newHouse, setNewHouse] = useState({
+    name: '', owner: '', phone: '', email: '',
+    lat: null as number | null, lng: null as number | null,
+  });
 
   useEffect(() => {
     if (!currentProgramId) return;
@@ -68,11 +72,13 @@ export default function CollectHouse() {
       program_id: currentProgramId, area_id: areaId || null,
       name: newHouse.name.trim(), owner_name: newHouse.owner.trim() || null,
       phone: newHouse.phone.trim() || null, email: newHouse.email.trim() || null,
+      gps_lat: newHouse.lat, gps_lng: newHouse.lng,
     }).select('*').single();
     if (!error && data) {
       setHouses((p) => [...p, data as House]);
       setHouseId((data as House).id);
-      setAddHouse(false); setNewHouse({ name: '', owner: '', phone: '', email: '' });
+      setAddHouse(false);
+      setNewHouse({ name: '', owner: '', phone: '', email: '', lat: null, lng: null });
     } else if (error) { setErr(friendlyError(error)); }
   };
 
@@ -157,6 +163,8 @@ export default function CollectHouse() {
             <input value={newHouse.name} autoFocus
               onChange={(e) => setNewHouse({ ...newHouse, name: e.target.value })} />
           </Field>
+          <GpsPin lat={newHouse.lat} lng={newHouse.lng} unit={unit}
+            onChange={(lat, lng) => setNewHouse((h) => ({ ...h, lat, lng }))} onError={setErr} />
           <Field label={t('setup.houseOwner')} hint={t('setup.personHint')}>
             <input value={newHouse.owner} onChange={(e) => setNewHouse({ ...newHouse, owner: e.target.value })} />
           </Field>
