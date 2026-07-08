@@ -8,6 +8,21 @@ import type { BudgetItem, ExpenseHead } from '../lib/types';
 
 const INCOME_TYPES = ['house', 'coupon', 'subscription', 'interest', 'ad_brochure', 'ad_stage', 'donation'];
 
+// Module-scoped so its identity is stable across renders. Defining it inside the
+// component would remount the input on every keystroke (mobile keyboard closes).
+function BudgetRow({
+  label, value, disabled, onChange,
+}: { label: string; value: string; disabled: boolean; onChange: (v: string) => void }) {
+  return (
+    <div className="flex items-center gap-3 py-1.5 border-b border-stone-50 last:border-0">
+      <span className="flex-1 text-sm">{label}</span>
+      <input type="number" inputMode="decimal" disabled={disabled}
+        className="w-36 text-right money" value={value} placeholder="0"
+        onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+
 export default function Budget() {
   const { t, i18n } = useTranslation();
   const { currentProgramId, isCommitteeAdmin, frozen } = useApp();
@@ -61,16 +76,7 @@ export default function Budget() {
   const totalIncome = INCOME_TYPES.reduce((s, ty) => s + (parseFloat(values[`i:${ty}`] || '0') || 0), 0);
   const totalExpense = heads.reduce((s, h) => s + (parseFloat(values[`e:${h.id}`] || '0') || 0), 0);
   const editable = isCommitteeAdmin && !frozen;
-
-  const Row = ({ k, label }: { k: string; label: string }) => (
-    <div className="flex items-center gap-3 py-1.5 border-b border-stone-50 last:border-0">
-      <span className="flex-1 text-sm">{label}</span>
-      <input type="number" inputMode="decimal" disabled={!editable}
-        className="w-36 text-right money"
-        value={values[k] ?? ''} placeholder="0"
-        onChange={(e) => setValues((p) => ({ ...p, [k]: e.target.value }))} />
-    </div>
-  );
+  const setVal = (k: string, v: string) => setValues((p) => ({ ...p, [k]: v }));
 
   return (
     <div className="max-w-lg mx-auto">
@@ -82,13 +88,17 @@ export default function Budget() {
 
       <div className="card mb-4">
         <div className="font-bold text-green-700 mb-2">{t('reports.income')} — ₹{totalIncome.toLocaleString('en-IN')}</div>
-        {INCOME_TYPES.map((ty) => <Row key={ty} k={`i:${ty}`} label={incomeTypeLabel(t, ty, unit)} />)}
+        {INCOME_TYPES.map((ty) => (
+          <BudgetRow key={ty} label={incomeTypeLabel(t, ty, unit)} disabled={!editable}
+            value={values[`i:${ty}`] ?? ''} onChange={(v) => setVal(`i:${ty}`, v)} />
+        ))}
       </div>
       <div className="card mb-4">
         <div className="font-bold text-red-700 mb-2">{t('reports.expense')} — ₹{totalExpense.toLocaleString('en-IN')}</div>
         {heads.map((h) => (
-          <Row key={h.id} k={`e:${h.id}`}
-            label={(i18n.language === 'ml' && h.name_ml) ? h.name_ml : h.name} />
+          <BudgetRow key={h.id} disabled={!editable}
+            label={(i18n.language === 'ml' && h.name_ml) ? h.name_ml : h.name}
+            value={values[`e:${h.id}`] ?? ''} onChange={(v) => setVal(`e:${h.id}`, v)} />
         ))}
       </div>
       {editable && (

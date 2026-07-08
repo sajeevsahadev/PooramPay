@@ -41,7 +41,8 @@
     "balance": "Balance",
     "actions": "Actions",
     "download": "Download",
-    "print": "Print"
+    "print": "Print",
+    "more": "more"
   },
   "units": {
     "house": { "one": "House", "many": "Houses" },
@@ -294,6 +295,9 @@
     "areaNotEmpty": "This area has entries. Deactivate it instead of deleting, or move the entries first.",
     "confirmDeleteArea": "Delete this empty area?",
     "confirmDeactivate": "Deactivate this area? It will be hidden when collecting, but its history stays.",
+    "unpaidOnly": "Not paid",
+    "noArea": "No area",
+    "paidLabel": "paid",
     "budgetSetup": "Budget",
     "budgetHelp": "Enter the planned amount for each head. Compare with actuals on the dashboard.",
     "weeklyAmount": "Weekly amount per house",

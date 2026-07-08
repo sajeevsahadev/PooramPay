@@ -22,6 +22,36 @@ const EMPTY_FORM = {
   name: '', owner: '', phone: '', email: '', areaId: '', sub: false,
   lat: null as number | null, lng: null as number | null,
 };
+const PAGE = 60;
+
+// Module-scoped: a scannable one-line row for a register entry.
+function HouseRow({
+  h, areaName, paid, onClick,
+}: { h: House; areaName?: string; paid: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick}
+      className="w-full flex items-center justify-between gap-2 py-2 px-1 border-b border-stone-100 last:border-0 text-left hover:bg-stone-50">
+      <div className="min-w-0 flex items-center gap-2">
+        <span className={`w-2 h-2 rounded-full shrink-0 ${paid ? 'bg-green-500' : 'bg-stone-300'}`}
+          title={paid ? 'paid' : 'not paid'} />
+        <div className="min-w-0">
+          <div className="text-sm font-medium truncate">{h.name}</div>
+          {(h.owner_name || h.phone) && (
+            <div className="text-xs text-stone-500 truncate">
+              {h.owner_name}{h.owner_name && h.phone ? ' · ' : ''}{h.phone}
+              {areaName ? ` · ${areaName}` : ''}
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-1.5 shrink-0 text-stone-400 text-sm">
+        {h.gps_lat != null && <span title="location pinned">📍</span>}
+        {h.in_subscription && <span title="weekly">📅</span>}
+        <span>›</span>
+      </div>
+    </button>
+  );
+}
 
 export default function Areas() {
   const { t } = useTranslation();
@@ -31,7 +61,16 @@ export default function Areas() {
   const [areas, setAreas] = useState<Area[]>([]);
   const [houses, setHouses] = useState<House[]>([]);
   const [members, setMembers] = useState<Membership[]>([]);
+  const [paidSet, setPaidSet] = useState<Set<string>>(new Set());
   const [err, setErr] = useState<string | null>(null);
+
+  // browse / search state
+  const [q, setQ] = useState('');
+  const [unpaidOnly, setUnpaidOnly] = useState(false);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [limitBy, setLimitBy] = useState<Record<string, number>>({});
+  const [searchLimit, setSearchLimit] = useState(PAGE);
+
   const [showArea, setShowArea] = useState(false);
   const [areaName, setAreaName] = useState('');
   const [editArea, setEditArea] = useState<Area | null>(null);
@@ -54,20 +93,33 @@ export default function Areas() {
 
   const load = async () => {
     if (!currentProgramId) return;
-    const [a, h, m] = await Promise.all([
+    const [a, h, m, paid] = await Promise.all([
       supabase.from('areas').select('*').eq('program_id', currentProgramId).order('name'),
       supabase.from('houses').select('*').eq('program_id', currentProgramId).order('sort_order').order('name'),
       supabase.from('program_members').select('*').eq('program_id', currentProgramId),
+      supabase.from('income_entries').select('house_id')
+        .eq('program_id', currentProgramId).not('house_id', 'is', null).is('deleted_at', null),
     ]);
     setAreas((a.data ?? []) as Area[]);
     setHouses((h.data ?? []) as House[]);
     setMembers((m.data ?? []) as Membership[]);
+    setPaidSet(new Set(((paid.data ?? []) as { house_id: string }[]).map((r) => r.house_id)));
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [currentProgramId]);
 
   const countIn = (areaId: string | null) => houses.filter((h) => h.area_id === areaId).length;
   const activeAreas = areas.filter((a) => a.is_active);
   const inactiveAreas = areas.filter((a) => !a.is_active);
+  const areaNameOf = (id: string | null) => areas.find((a) => a.id === id)?.name;
+
+  const matches = (h: House) => {
+    if (unpaidOnly && paidSet.has(h.id)) return false;
+    if (!q.trim()) return true;
+    const s = q.trim().toLowerCase();
+    return (`${h.name} ${h.owner_name ?? ''} ${h.phone ?? ''}`).toLowerCase().includes(s);
+  };
+  const searching = q.trim().length > 0 || unpaidOnly;
+  const searchResults = useMemo(() => houses.filter(matches), [houses, q, unpaidOnly, paidSet]); // eslint-disable-line
 
   const saveArea = async () => {
     try {
@@ -93,6 +145,9 @@ export default function Areas() {
       await load();
     } catch (e) { setErr(friendlyError(e)); }
   };
+
+  const toggleExpand = (id: string) =>
+    setExpanded((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   // ---- quick add ----
   const quickSave = async () => {
@@ -137,10 +192,7 @@ export default function Areas() {
   };
 
   // ---- single entry add / edit ----
-  const openAdd = (areaId: string) => {
-    setForm({ ...EMPTY_FORM, areaId });
-    setEntry({ mode: 'add' });
-  };
+  const openAdd = (areaId: string) => { setForm({ ...EMPTY_FORM, areaId }); setEntry({ mode: 'add' }); };
   const openEdit = (h: House) => {
     setForm({
       name: h.name, owner: h.owner_name ?? '', phone: h.phone ?? '', email: h.email ?? '',
@@ -153,14 +205,10 @@ export default function Areas() {
     if (!form.name.trim() || busy) return;
     setBusy(true); setErr(null);
     const payload = {
-      name: form.name.trim(),
-      owner_name: form.owner.trim() || null,
-      phone: form.phone.trim() || null,
-      email: form.email.trim() || null,
-      area_id: form.areaId || null,
-      in_subscription: form.sub,
-      gps_lat: form.lat,
-      gps_lng: form.lng,
+      name: form.name.trim(), owner_name: form.owner.trim() || null,
+      phone: form.phone.trim() || null, email: form.email.trim() || null,
+      area_id: form.areaId || null, in_subscription: form.sub,
+      gps_lat: form.lat, gps_lng: form.lng,
     };
     try {
       if (entry?.mode === 'edit' && entry.house) {
@@ -200,62 +248,58 @@ export default function Areas() {
     return m?.display_name || m?.email || '';
   };
 
-  const Chip = ({ h }: { h: House }) => (
-    <button onClick={() => openEdit(h)}
-      className="chip-gray hover:bg-brand-50 hover:text-brand-800 cursor-pointer min-h-0"
-      title={t('setup.editEntry')}>
-      {h.name}
-      {h.phone ? ' 📞' : ''}{h.gps_lat != null ? ' 📍' : ''}{h.in_subscription ? ' 📅' : ''}
-    </button>
-  );
-
-  const AreaCard = ({ a }: { a: Area }) => {
-    const n = countIn(a.id);
+  const AreaBlock = ({ a }: { a: Area }) => {
+    const list = houses.filter((h) => h.area_id === a.id);
+    const paidCount = list.filter((h) => paidSet.has(h.id)).length;
+    const isOpen = expanded.has(a.id);
+    const limit = limitBy[a.id] ?? PAGE;
     return (
-      <div className={`card mb-3 ${a.is_active ? '' : 'opacity-70'}`}>
-        <div className="flex justify-between items-start gap-2 flex-wrap">
-          <div className="min-w-0">
-            <div className="font-bold flex items-center gap-2">
-              {a.name}
-              {!a.is_active && <span className="chip-gray">{t('setup.inactive')}</span>}
-            </div>
-            <div className="text-xs text-stone-500">
-              {units}: {n}
-              {a.assigned_member_ids.length > 0 && (
-                <> · 👤 {a.assigned_member_ids.map(memberName).join(', ')}</>
-              )}
-            </div>
+      <div className={`card mb-3 p-0 overflow-hidden ${a.is_active ? '' : 'opacity-70'}`}>
+        <div className="p-3">
+          <div className="flex justify-between items-start gap-2 flex-wrap">
+            <button className="min-w-0 text-left flex items-center gap-2" onClick={() => toggleExpand(a.id)}>
+              <span className="text-stone-400">{isOpen ? '▾' : '▸'}</span>
+              <span>
+                <span className="font-bold flex items-center gap-2">
+                  {a.name}
+                  {!a.is_active && <span className="chip-gray">{t('setup.inactive')}</span>}
+                </span>
+                <span className="text-xs text-stone-500">
+                  {units}: {list.length} · ✅ {paidCount}/{list.length}
+                  {a.assigned_member_ids.length > 0 && <> · 👤 {a.assigned_member_ids.map(memberName).join(', ')}</>}
+                </span>
+              </span>
+            </button>
+            {isCommitteeAdmin && !frozen && (
+              <div className="flex flex-wrap gap-1.5 justify-end">
+                {can('collect') && a.is_active && (
+                  <button className="btn-primary text-xs px-2.5 py-1.5" onClick={() => openAdd(a.id)}>＋ {unit}</button>
+                )}
+                <button className="btn-secondary text-xs px-2.5 py-1.5" onClick={() => setEditArea(a)}>👥</button>
+                {a.is_active
+                  ? <button className="btn-secondary text-xs px-2.5 py-1.5" onClick={() => setAreaActive(a, false)}>🚫</button>
+                  : <button className="btn-secondary text-xs px-2.5 py-1.5" onClick={() => setAreaActive(a, true)}>✓</button>}
+                <button className={`btn-secondary text-xs px-2.5 py-1.5 ${list.length > 0 ? 'opacity-40' : 'text-red-600'}`}
+                  title={list.length > 0 ? t('setup.areaNotEmpty') : t('setup.deleteArea')}
+                  onClick={() => deleteArea(a)}>🗑</button>
+              </div>
+            )}
           </div>
-          {isCommitteeAdmin && !frozen && (
-            <div className="flex flex-wrap gap-1.5 justify-end">
-              {can('collect') && a.is_active && (
-                <button className="btn-primary text-xs px-2.5 py-1.5" onClick={() => openAdd(a.id)}>
-                  ＋ {unit}
-                </button>
-              )}
-              <button className="btn-secondary text-xs px-2.5 py-1.5" onClick={() => setEditArea(a)}>
-                👥 {t('setup.team')}
-              </button>
-              {a.is_active ? (
-                <button className="btn-secondary text-xs px-2.5 py-1.5" onClick={() => setAreaActive(a, false)}>
-                  🚫
-                </button>
-              ) : (
-                <button className="btn-secondary text-xs px-2.5 py-1.5" onClick={() => setAreaActive(a, true)}>
-                  ✓ {t('setup.activate')}
-                </button>
-              )}
-              <button className={`btn-secondary text-xs px-2.5 py-1.5 ${n > 0 ? 'opacity-40' : 'text-red-600'}`}
-                title={n > 0 ? t('setup.areaNotEmpty') : t('setup.deleteArea')}
-                onClick={() => deleteArea(a)}>
-                🗑
-              </button>
-            </div>
-          )}
         </div>
-        {n > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {houses.filter((h) => h.area_id === a.id).map((h) => <Chip key={h.id} h={h} />)}
+        {isOpen && (
+          <div className="border-t border-stone-100">
+            {list.length === 0 && <div className="p-3 text-sm text-stone-400">{t('common.none')}</div>}
+            {list.slice(0, limit).map((h) => (
+              <div className="px-2" key={h.id}>
+                <HouseRow h={h} paid={paidSet.has(h.id)} onClick={() => openEdit(h)} />
+              </div>
+            ))}
+            {list.length > limit && (
+              <button className="w-full py-2 text-sm text-brand-700 font-semibold hover:bg-stone-50"
+                onClick={() => setLimitBy((p) => ({ ...p, [a.id]: limit + PAGE }))}>
+                ↓ {list.length - limit} {t('common.more')}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -275,40 +319,91 @@ export default function Areas() {
             </button>
           )}
           {isCommitteeAdmin && !frozen && (
-            <button className="btn-secondary text-sm" onClick={() => setShowArea(true)}>
-              ＋ {t('setup.newArea')}
-            </button>
+            <button className="btn-secondary text-sm" onClick={() => setShowArea(true)}>＋ {t('setup.newArea')}</button>
           )}
         </div>
       </div>
-      <p className="text-sm text-stone-500 mb-4">{units}: {houses.length}</p>
+      <p className="text-sm text-stone-500 mb-3">
+        {units}: {houses.length} · ✅ {paidSet.size} {t('setup.paidLabel')}
+      </p>
       <ErrorNote msg={err} />
-      {areas.length === 0 && unassigned.length === 0 && <Empty />}
 
-      {activeAreas.map((a) => <AreaCard key={a.id} a={a} />)}
-
-      {unassigned.length > 0 && (
-        <div className="card mb-3">
-          <div className="flex justify-between items-center">
-            <div className="font-semibold text-sm text-stone-500">—</div>
-            {can('collect') && !frozen && (
-              <button className="btn-primary text-xs px-2.5 py-1.5" onClick={() => openAdd('')}>
-                ＋ {unit}
-              </button>
-            )}
-          </div>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {unassigned.map((h) => <Chip key={h.id} h={h} />)}
-          </div>
+      {/* search / filter */}
+      {houses.length > 0 && (
+        <div className="flex gap-2 mb-3">
+          <input value={q} onChange={(e) => { setQ(e.target.value); setSearchLimit(PAGE); }}
+            placeholder={`🔍 ${t('common.search')}`} className="flex-1" />
+          <button onClick={() => { setUnpaidOnly((v) => !v); setSearchLimit(PAGE); }}
+            className={`btn text-sm px-3 whitespace-nowrap ${unpaidOnly ? 'bg-brand-700 text-white' : 'bg-surface border border-stone-300'}`}>
+            ⚪ {t('setup.unpaidOnly')}
+          </button>
         </div>
       )}
 
-      {inactiveAreas.length > 0 && (
-        <>
-          <div className="text-sm font-semibold text-stone-500 mt-6 mb-2">
-            {t('setup.inactiveAreas')} ({inactiveAreas.length})
+      {areas.length === 0 && unassigned.length === 0 && <Empty />}
+
+      {/* search results — flat list across all areas */}
+      {searching ? (
+        <div className="card p-0 overflow-hidden">
+          <div className="px-3 py-2 text-sm font-semibold text-stone-600 border-b border-stone-100">
+            {searchResults.length} {units}
           </div>
-          {inactiveAreas.map((a) => <AreaCard key={a.id} a={a} />)}
+          {searchResults.length === 0 && <div className="p-3 text-sm text-stone-400">{t('common.none')}</div>}
+          <div className="px-2">
+            {searchResults.slice(0, searchLimit).map((h) => (
+              <HouseRow key={h.id} h={h} areaName={areaNameOf(h.area_id)}
+                paid={paidSet.has(h.id)} onClick={() => openEdit(h)} />
+            ))}
+          </div>
+          {searchResults.length > searchLimit && (
+            <button className="w-full py-2 text-sm text-brand-700 font-semibold hover:bg-stone-50"
+              onClick={() => setSearchLimit((n) => n + PAGE)}>
+              ↓ {searchResults.length - searchLimit} {t('common.more')}
+            </button>
+          )}
+        </div>
+      ) : (
+        <>
+          {activeAreas.map((a) => <AreaBlock key={a.id} a={a} />)}
+
+          {unassigned.length > 0 && (
+            <div className="card mb-3 p-0 overflow-hidden">
+              <div className="p-3 flex justify-between items-center">
+                <button className="text-left flex items-center gap-2" onClick={() => toggleExpand('__none')}>
+                  <span className="text-stone-400">{expanded.has('__none') ? '▾' : '▸'}</span>
+                  <span>
+                    <span className="font-bold">— {t('setup.noArea')}</span>
+                    <span className="block text-xs text-stone-500">{units}: {unassigned.length}</span>
+                  </span>
+                </button>
+                {can('collect') && !frozen && (
+                  <button className="btn-primary text-xs px-2.5 py-1.5" onClick={() => openAdd('')}>＋ {unit}</button>
+                )}
+              </div>
+              {expanded.has('__none') && (
+                <div className="border-t border-stone-100 px-2">
+                  {unassigned.slice(0, limitBy['__none'] ?? PAGE).map((h) => (
+                    <HouseRow key={h.id} h={h} paid={paidSet.has(h.id)} onClick={() => openEdit(h)} />
+                  ))}
+                  {unassigned.length > (limitBy['__none'] ?? PAGE) && (
+                    <button className="w-full py-2 text-sm text-brand-700 font-semibold"
+                      onClick={() => setLimitBy((p) => ({ ...p, __none: (p['__none'] ?? PAGE) + PAGE }))}>
+                      ↓ {t('common.more')}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {inactiveAreas.length > 0 && (
+            <>
+              <div className="text-sm font-semibold text-stone-500 mt-6 mb-2">
+                {t('setup.inactiveAreas')} ({inactiveAreas.length})
+              </div>
+              {inactiveAreas.map((a) => <AreaBlock key={a.id} a={a} />)}
+            </>
+          )}
         </>
       )}
 
@@ -321,14 +416,12 @@ export default function Areas() {
         </Modal>
       )}
 
-      {/* single entry add/edit — full details incl. person name, email, GPS */}
       {entry && (
         <Modal
           title={entry.mode === 'add' ? t('collect.addUnit', { unit }) : `${t('setup.editEntry')} — ${entry.house?.name}`}
           onClose={() => setEntry(null)}>
           <Field label={t('collect.unitName', { unit })}>
-            <input value={form.name} autoFocus
-              onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <input value={form.name} autoFocus onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </Field>
           <GpsPin lat={form.lat} lng={form.lng} unit={unit}
             onChange={(lat, lng) => setForm((f) => ({ ...f, lat, lng }))} onError={setErr} />
@@ -358,7 +451,6 @@ export default function Areas() {
               📅 {t('collect.subscription')}
             </label>
           )}
-
           <div className="flex gap-2">
             <button className="btn-primary flex-1" onClick={saveEntry} disabled={busy || !form.name.trim()}>
               {t('common.save')}
@@ -398,7 +490,6 @@ export default function Areas() {
               ✓ {t('setup.addedCount', { count: qCount })}
             </div>
           )}
-
           <div className="border-t border-stone-200 mt-4 pt-4">
             <div className="font-semibold text-sm mb-1">📋 {t('setup.bulkPaste')}</div>
             <p className="text-xs text-stone-500 mb-2">{t('setup.bulkPasteHelp')}</p>

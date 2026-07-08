@@ -95,7 +95,7 @@ export default function Coupons() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h1 className="text-xl font-bold">🎟️ {t('coupons.title')}</h1>
         {treasurerish && !frozen && (
           <div className="flex gap-2">
@@ -112,7 +112,7 @@ export default function Coupons() {
       <ErrorNote msg={err} />
 
       {schemes.map((s) => (
-        <div key={s.id} className="card mb-3 flex justify-between text-sm">
+        <div key={s.id} className="card mb-3 flex justify-between text-sm flex-wrap gap-1">
           <div>
             <b>{s.name}</b> · {fmtINR(s.price)} × {s.total_coupons}
           </div>
@@ -132,33 +132,38 @@ export default function Coupons() {
       <div className="space-y-2">
         {books.map((b) => (
           <div key={b.id} className="card">
-            <div className="flex justify-between items-start">
-              <div>
+            <div className="flex justify-between items-start gap-2">
+              <div className="min-w-0">
                 <div className="font-bold">{t('coupons.book')} {b.book_no} <StatusChip status={b.status} /></div>
-                <div className="text-sm text-stone-600">{b.holder_name}{b.holder_phone ? ` · ${b.holder_phone}` : ''}</div>
-                <div className="text-xs text-stone-500 mt-1">
-                  {t('coupons.soldCount')}: {b.sold_count}/{b.coupons_count} ·
-                  {' '}{t('coupons.remitted')}: <span className="money">{fmtINR(b.remitted)}</span>
-                  {Number(b.outstanding) > 0 && (
-                    <> · {t('coupons.outstanding')}: <b className="money text-red-700">{fmtINR(b.outstanding)}</b></>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 mt-2 w-56 max-w-full">
-                  <div className="bar-track flex-1" title={t('coupons.sold')}>
-                    <div className="bar-fill" style={{ width: `${Math.min(100, (b.sold_count / Math.max(b.coupons_count, 1)) * 100)}%` }} />
-                  </div>
-                  <div className="bar-track flex-1" title={t('coupons.remitted')}>
-                    <div className={Number(b.outstanding) > 0 ? 'bar-fill-red' : 'bar-fill-green'}
-                      style={{ width: `${Number(b.sold_value) > 0 ? Math.min(100, (Number(b.remitted) / Number(b.sold_value)) * 100) : 0}%` }} />
-                  </div>
+                <div className="text-sm text-stone-600 truncate">
+                  {b.holder_name}{b.holder_phone ? ` · ${b.holder_phone}` : ''}
                 </div>
               </div>
-              {can('collect') && !frozen && b.status !== 'settled' && b.status !== 'returned' && (
-                <button className="btn-secondary text-sm shrink-0" onClick={() => setRemitBook(b)}>
-                  {t('coupons.recordRemit')}
-                </button>
+              {Number(b.outstanding) > 0 && (
+                <div className="text-right shrink-0">
+                  <div className="text-[10px] uppercase tracking-wide text-stone-400">{t('coupons.outstanding')}</div>
+                  <div className="money font-bold text-red-700">{fmtINR(b.outstanding)}</div>
+                </div>
               )}
             </div>
+            <div className="text-xs text-stone-500 mt-1">
+              {t('coupons.soldCount')}: {b.sold_count}/{b.coupons_count} ·
+              {' '}{t('coupons.remitted')}: <span className="money text-green-700">{fmtINR(b.remitted)}</span>
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <div className="bar-track flex-1" title={t('coupons.sold')}>
+                <div className="bar-fill" style={{ width: `${Math.min(100, (b.sold_count / Math.max(b.coupons_count, 1)) * 100)}%` }} />
+              </div>
+              <div className="bar-track flex-1" title={t('coupons.remitted')}>
+                <div className={Number(b.outstanding) > 0 ? 'bar-fill-red' : 'bar-fill-green'}
+                  style={{ width: `${Number(b.sold_value) > 0 ? Math.min(100, (Number(b.remitted) / Number(b.sold_value)) * 100) : 0}%` }} />
+              </div>
+            </div>
+            {can('collect') && !frozen && b.status !== 'settled' && b.status !== 'returned' && (
+              <button className="btn-secondary text-sm w-full mt-3" onClick={() => setRemitBook(b)}>
+                💵 {t('coupons.recordRemit')}
+              </button>
+            )}
           </div>
         ))}
       </div>
