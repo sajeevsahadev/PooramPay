@@ -17,6 +17,10 @@ export default defineConfig({
         theme_color: '#3730a3',
         background_color: '#f5f5f4',
         display: 'standalone',
+        orientation: 'portrait',
+        scope: '/',
+        lang: 'en',
+        categories: ['finance', 'productivity', 'business'],
         start_url: '/',
         icons: [
           { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },

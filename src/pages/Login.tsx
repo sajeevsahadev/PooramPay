@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { setLanguage } from '../i18n';
 
@@ -43,6 +44,7 @@ export default function Login() {
             </button>
           ))}
         </div>
+        <Link to="/privacy" className="mt-6 text-xs text-stone-400 underline">{t('privacy.title')}</Link>
       </div>
     </div>
   );

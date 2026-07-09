@@ -30,8 +30,8 @@ export default function Reports() {
   useEffect(() => {
     if (!currentProgramId) return;
     Promise.all([
-      supabase.from('v_income_by_type').select('*').eq('program_id', currentProgramId),
-      supabase.from('v_expense_by_head').select('*').eq('program_id', currentProgramId),
+      supabase.rpc('income_by_type', { p_program: currentProgramId }),
+      supabase.rpc('expense_by_head', { p_program: currentProgramId }),
       supabase.from('expense_heads').select('*').eq('program_id', currentProgramId).order('sort_order'),
       supabase.from('budget_items').select('*').eq('program_id', currentProgramId),
       supabase.from('v_coupon_books').select('*').eq('program_id', currentProgramId).order('book_no').limit(500),

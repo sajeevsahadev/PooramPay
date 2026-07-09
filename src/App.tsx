@@ -23,12 +23,18 @@ import Budget from './pages/Budget';
 import AuditLog from './pages/AuditLog';
 import DeletedTx from './pages/DeletedTx';
 import AdminConsole from './pages/AdminConsole';
+import Privacy from './pages/Privacy';
 
 export default function App() {
   const { session, profile, loading, memberships, isPadmin } = useApp();
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Spinner /></div>;
-  if (!session) return <Login />;
+  if (!session) return (
+    <Routes>
+      <Route path="/privacy" element={<div className="p-4 min-h-screen"><Privacy /></div>} />
+      <Route path="*" element={<Login />} />
+    </Routes>
+  );
   if (!profile) return <div className="min-h-screen flex items-center justify-center"><Spinner /></div>;
   if (!profile.phone) return <Onboarding />;
 
@@ -38,6 +44,7 @@ export default function App() {
     return (
       <Routes>
         <Route path="/setup" element={<div className="p-4 max-w-3xl mx-auto"><Setup /></div>} />
+        <Route path="/privacy" element={<div className="p-4"><Privacy /></div>} />
         <Route path="*" element={<NoProgram />} />
       </Routes>
     );
@@ -64,6 +71,7 @@ export default function App() {
         <Route path="/audit" element={<AuditLog />} />
         <Route path="/deleted" element={<DeletedTx />} />
         <Route path="/admin" element={<AdminConsole />} />
+        <Route path="/privacy" element={<Privacy />} />
         <Route path="*" element={<Dashboard />} />
       </Route>
     </Routes>

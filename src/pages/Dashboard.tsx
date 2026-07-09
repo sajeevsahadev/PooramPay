@@ -42,8 +42,7 @@ export default function Dashboard() {
         .select('id, amount, description, vendor_name, expense_date, created_at, status')
         .eq('program_id', pid).is('deleted_at', null).eq('status', 'paid')
         .order('created_at', { ascending: false }).limit(6),
-      supabase.from('v_my_cash').select('cash_holding')
-        .eq('program_id', pid).eq('collected_by', uid).maybeSingle(),
+      supabase.rpc('program_my_cash', { p_program: pid, p_user: uid }),
       can('coupons')
         ? supabase.from('v_coupon_totals').select('outstanding').eq('program_id', pid)
         : Promise.resolve({ data: [] as { outstanding: number }[] }),
@@ -54,9 +53,8 @@ export default function Dashboard() {
             .eq('program_id', pid).eq('status', 'pending')
         : Promise.resolve({ data: [] as { id: string; amount: number; from_profile: string }[] }),
       supabase.from('budget_items').select('side, planned').eq('program_id', pid),
-      supabase.from('v_income_by_type').select('entry_type, total').eq('program_id', pid),
-      supabase.from('v_income_by_day').select('entry_date, total')
-        .eq('program_id', pid).gte('entry_date', since).order('entry_date'),
+      supabase.rpc('income_by_type', { p_program: pid }),
+      supabase.rpc('income_by_day', { p_program: pid, p_since: since }),
     ]);
 
     const rows: TxRow[] = [
@@ -72,7 +70,7 @@ export default function Dashboard() {
       })),
     ].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
     setRecent(rows);
-    setMyCash((cash.data as { cash_holding: number } | null)?.cash_holding ?? 0);
+    setMyCash(Number((cash as { data: number | null }).data ?? 0));
     setCouponOut(((coupons.data ?? []) as { outstanding: number }[])
       .reduce((s, b) => s + Number(b.outstanding || 0), 0));
     type TaskRow = { id: string; program_members: { profile_id: string | null } | null };

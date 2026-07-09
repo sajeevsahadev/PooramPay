@@ -70,6 +70,24 @@
     "admin": "Admin Console",
     "subscriptions": "Weekly Collection"
   },
+  "privacy": {
+    "title": "Privacy & Data",
+    "updated": "Last updated",
+    "collectTitle": "What we collect",
+    "collectBody": "Your name, email (from Google sign-in), and phone number; the financial records your committee enters (collections, expenses, coupons); and register details you add (household/member names, contacts, and optional GPS locations you pin).",
+    "useTitle": "How we use it",
+    "useBody": "Only to run your committee's collections and accounts inside this app — showing balances, reports, and who collected or approved what. We do not use your data for advertising and we do not sell it.",
+    "locationTitle": "Location",
+    "locationBody": "GPS is used only when you tap 'Pin GPS Location' to save a house/member location for follow-up collection. The app never tracks your location in the background.",
+    "shareTitle": "Who can see it",
+    "shareBody": "Only members of your committee program, according to the role and permissions your committee admin sets. Platform administrators may access data to prevent misuse. Data is stored securely on Supabase (Postgres) with row-level security.",
+    "securityTitle": "Security",
+    "securityBody": "All traffic is encrypted (HTTPS). Access is controlled at the database level. Financial records cannot be permanently deleted — they move to a visible deleted bucket for transparency and audit.",
+    "rightsTitle": "Your rights & data deletion",
+    "rightsBody": "You can request a copy of your personal data or ask us to delete your account and personal data. Committee financial records may be retained for the committee's audit integrity, but your personal profile can be removed.",
+    "deleteBtn": "Request account & data deletion",
+    "contactTitle": "Contact"
+  },
   "errors": {
     "frozen": "This program is frozen — records are read-only.",
     "notAllowed": "You do not have permission for this action.",

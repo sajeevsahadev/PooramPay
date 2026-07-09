@@ -64,6 +64,10 @@ export default function More() {
       <button className="btn-secondary w-full" onClick={() => supabase.auth.signOut()}>
         {t('common.signOut')}
       </button>
+
+      <div className="text-center mt-4">
+        <Link to="/privacy" className="text-xs text-stone-500 underline">{t('privacy.title')}</Link>
+      </div>
     </div>
   );
 }

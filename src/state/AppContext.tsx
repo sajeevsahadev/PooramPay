@@ -103,12 +103,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const refreshFinance = useCallback(async () => {
     if (!currentProgramId) return setFinance(null);
-    const { data } = await supabase
-      .from('v_program_finance')
-      .select('*')
-      .eq('program_id', currentProgramId)
-      .maybeSingle();
-    setFinance((data as Finance) ?? null);
+    // program-scoped function (indexed) instead of the global-aggregate view
+    const { data } = await supabase.rpc('program_finance', { p_program: currentProgramId });
+    setFinance(((data as Finance[] | null)?.[0]) ?? null);
   }, [currentProgramId]);
 
   useEffect(() => {
