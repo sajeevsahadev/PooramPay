@@ -20,6 +20,7 @@ export default function Expenses() {
   });
   const [busy, setBusy] = useState(false);
   const [rejecting, setRejecting] = useState<Expense | null>(null);
+  const [approving, setApproving] = useState<Expense | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const treasurerish = isCommitteeAdmin || current?.role === 'treasurer' || can('approve');
 
@@ -145,7 +146,7 @@ export default function Expenses() {
         )}
         {tab === 'approvals' && r.status === 'pending' && !frozen && (
           <>
-            <button className="btn-primary text-sm py-1.5" disabled={busy} onClick={() => decide(r, true)}>
+            <button className="btn-primary text-sm py-1.5" disabled={busy} onClick={() => setApproving(r)}>
               ✓ {t('expenses.approve')}
             </button>
             <button className="btn-danger text-sm py-1.5" disabled={busy} onClick={() => setRejecting(r)}>
@@ -251,6 +252,17 @@ export default function Expenses() {
           <button className="btn-primary w-full mt-2" onClick={save}
             disabled={busy || !form.headId || !form.amount || (showNew === 'claim' && !form.file)}>
             {showNew === 'claim' ? t('common.submit') : t('common.save')}
+          </button>
+        </Modal>
+      )}
+
+      {approving && (
+        <Modal title={t('expenses.approve')} onClose={() => setApproving(null)}>
+          <p className="text-sm mb-1">{approving.description || approving.vendor_name || headName(approving.head_id)}</p>
+          <p className="text-3xl font-black money mb-4">{fmtINR(approving.amount)}</p>
+          <button className="btn-primary w-full" disabled={busy}
+            onClick={async () => { await decide(approving, true); setApproving(null); }}>
+            ✓ {t('expenses.approve')}
           </button>
         </Modal>
       )}

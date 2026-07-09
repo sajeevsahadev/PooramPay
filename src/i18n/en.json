@@ -70,6 +70,15 @@
     "admin": "Admin Console",
     "subscriptions": "Weekly Collection"
   },
+  "errors": {
+    "frozen": "This program is frozen — records are read-only.",
+    "notAllowed": "You do not have permission for this action.",
+    "reasonRequired": "A reason is required.",
+    "nothingToHandover": "You are not holding any cash right now.",
+    "areaNotEmpty": "This area still has entries. Deactivate it instead, or move the entries first.",
+    "network": "Network problem. Check your connection and try again.",
+    "generic": "Sorry, something went wrong. Please try again."
+  },
   "update": {
     "available": "A new version is available",
     "help": "Update now to get the latest features and fixes.",

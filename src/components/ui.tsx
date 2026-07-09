@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 
 export function Spinner() {
   const { t } = useTranslation();
@@ -81,13 +82,21 @@ export function ErrorNote({ msg }: { msg: string | null }) {
   return <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-3 text-sm">{msg}</div>;
 }
 
-/** Translate a raised DB error into something a villager can read. */
+/**
+ * Turn a raised DB/network error into a safe, translated message.
+ * Never surfaces raw Postgres/RLS text to the user (avoids info leakage and
+ * keeps both languages consistent).
+ */
 export function friendlyError(e: unknown): string {
   const msg = (e as { message?: string })?.message ?? String(e);
-  if (msg.includes('PROGRAM_FROZEN')) return 'This program is frozen — records are read-only.';
-  if (msg.includes('NOT_ALLOWED')) return 'You do not have permission for this action.';
-  if (msg.includes('REASON_REQUIRED')) return 'A reason is required.';
-  if (msg.includes('NOTHING_TO_HANDOVER')) return 'You are not holding any cash right now.';
-  if (msg.includes('row-level security')) return 'You do not have permission for this action.';
-  return msg;
+  const tr = i18n.t.bind(i18n);
+  if (msg.includes('PROGRAM_FROZEN') || msg.includes('FROZEN')) return tr('errors.frozen');
+  if (msg.includes('AREA_NOT_EMPTY')) return tr('errors.areaNotEmpty');
+  if (msg.includes('REASON_REQUIRED')) return tr('errors.reasonRequired');
+  if (msg.includes('NOTHING_TO_HANDOVER')) return tr('errors.nothingToHandover');
+  if (msg.includes('NOT_ALLOWED') || msg.includes('ONLY_PLATFORM_ADMIN')
+      || msg.includes('row-level security') || msg.includes('permission')) return tr('errors.notAllowed');
+  if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('network'))
+    return tr('errors.network');
+  return tr('errors.generic');
 }
