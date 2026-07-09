@@ -5,9 +5,30 @@ export interface Profile {
   id: string;
   email: string;
   full_name: string | null;
+  nickname: string | null;
   phone: string | null;
   language: string;
   is_platform_admin: boolean;
+}
+
+/** Best name to show for a member to other users. */
+export function displayName(m: {
+  display_name?: string | null;
+  nickname?: string | null;
+  full_name?: string | null;
+  email?: string | null;
+  profiles?: { nickname?: string | null; full_name?: string | null } | null;
+}): string {
+  return (
+    // the user's own chosen nickname wins, then the admin's per-program label
+    m.profiles?.nickname ||
+    m.nickname ||
+    m.display_name ||
+    m.profiles?.full_name ||
+    m.full_name ||
+    (m.email ? m.email.split('@')[0] : '') ||
+    '—'
+  );
 }
 
 export interface Organization {
@@ -49,6 +70,7 @@ export interface Membership {
   role: Role;
   permissions: Record<string, boolean>;
   programs?: Program;
+  profiles?: { nickname: string | null; full_name: string | null } | null;
 }
 
 export interface Finance {

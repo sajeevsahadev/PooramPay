@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase, fmtDate } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { Field, ErrorNote, friendlyError, Modal } from '../components/ui';
-import type { CommitteeTask, Membership } from '../lib/types';
+import { displayName, type CommitteeTask, type Membership } from '../lib/types';
 
 const COLS: { id: CommitteeTask['status']; key: string; cls: string }[] = [
   { id: 'pending', key: 'tasks.pending', cls: 'border-amber-300' },
@@ -26,7 +26,7 @@ export default function Tasks() {
     const [tk, mem] = await Promise.all([
       supabase.from('committee_tasks').select('*').eq('program_id', currentProgramId)
         .order('created_at', { ascending: false }),
-      supabase.from('program_members').select('*').eq('program_id', currentProgramId),
+      supabase.from('program_members').select('*, profiles(nickname, full_name)').eq('program_id', currentProgramId),
     ]);
     setTasks((tk.data ?? []) as CommitteeTask[]);
     setMembers((mem.data ?? []) as Membership[]);
@@ -35,7 +35,7 @@ export default function Tasks() {
 
   const memberName = (id: string | null) => {
     const m = members.find((x) => x.id === id);
-    return m?.display_name || m?.email?.split('@')[0] || '';
+    return m ? displayName(m) : '';
   };
   const myMemberIds = members.filter((m) => m.profile_id === session!.user.id).map((m) => m.id);
 
@@ -131,7 +131,7 @@ export default function Tasks() {
             <select value={form.assignee} onChange={(e) => setForm({ ...form, assignee: e.target.value })}>
               <option value="">—</option>
               {members.map((m) => (
-                <option key={m.id} value={m.id}>{m.display_name || m.email}</option>
+                <option key={m.id} value={m.id}>{displayName(m)}</option>
               ))}
             </select>
           </Field>

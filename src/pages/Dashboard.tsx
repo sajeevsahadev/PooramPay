@@ -13,12 +13,16 @@ interface TxRow {
 
 export default function Dashboard() {
   const { t, i18n } = useTranslation();
-  const { finance, current, currentProgramId, can, refreshFinance, session, frozen } = useApp();
+  const { profile, memberships, finance, current, currentProgramId, setCurrentProgramId,
+    can, refreshFinance, session, frozen } = useApp();
   const { unit } = useUnits();
   const [recent, setRecent] = useState<TxRow[]>([]);
   const [myCash, setMyCash] = useState(0);
   const [couponOut, setCouponOut] = useState(0);
-  const [myTasks, setMyTasks] = useState(0);
+  const [myTaskList, setMyTaskList] = useState<
+    { id: string; title: string; status: string; due_date: string | null }[]
+  >([]);
+  const myTasks = myTaskList.length;
   const [budgetExpense, setBudgetExpense] = useState(0);
   const [incomeByType, setIncomeByType] = useState<{ label: string; value: number }[]>([]);
   const [dailyIncome, setDailyIncome] = useState<number[]>([]);
@@ -46,8 +50,9 @@ export default function Dashboard() {
       can('coupons')
         ? supabase.from('v_coupon_totals').select('outstanding').eq('program_id', pid)
         : Promise.resolve({ data: [] as { outstanding: number }[] }),
-      supabase.from('committee_tasks').select('id, program_members!assignee_member_id(profile_id)')
-        .eq('program_id', pid).neq('status', 'done'),
+      supabase.from('committee_tasks')
+        .select('id, title, status, due_date, program_members!assignee_member_id(profile_id)')
+        .eq('program_id', pid).neq('status', 'done').order('due_date', { nullsFirst: false }),
       can('approve')
         ? supabase.from('cash_handovers').select('id, amount, from_profile')
             .eq('program_id', pid).eq('status', 'pending')
@@ -73,9 +78,13 @@ export default function Dashboard() {
     setMyCash(Number((cash as { data: number | null }).data ?? 0));
     setCouponOut(((coupons.data ?? []) as { outstanding: number }[])
       .reduce((s, b) => s + Number(b.outstanding || 0), 0));
-    type TaskRow = { id: string; program_members: { profile_id: string | null } | null };
-    setMyTasks(((tasks.data ?? []) as unknown as TaskRow[])
-      .filter((x) => x.program_members?.profile_id === uid).length);
+    type TaskRow = {
+      id: string; title: string; status: string; due_date: string | null;
+      program_members: { profile_id: string | null } | null;
+    };
+    setMyTaskList(((tasks.data ?? []) as unknown as TaskRow[])
+      .filter((x) => x.program_members?.profile_id === uid)
+      .map((x) => ({ id: x.id, title: x.title, status: x.status, due_date: x.due_date })));
     setPendingHandovers((hands.data ?? []) as { id: string; amount: number; from_profile: string }[]);
 
     setBudgetExpense(((bud.data ?? []) as { side: string; planned: number }[])
@@ -115,9 +124,69 @@ export default function Dashboard() {
   const showMoney = can('view_money');
   const spark14 = dailyIncome.reduce((a, b) => a + b, 0);
 
+  const hour = new Date().getHours();
+  const greetKey = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+  const myName = profile?.nickname || profile?.full_name || '';
+
   return (
     <div className="space-y-4">
+      {/* personalized greeting */}
+      <div>
+        <h1 className="text-xl font-black">
+          {greetKey === 'morning' ? '☀️' : greetKey === 'afternoon' ? '🌤️' : '🌙'}{' '}
+          {t('home.' + greetKey)}{myName ? `, ${myName}` : ''}
+        </h1>
+        {memberships.length > 0 && (
+          <p className="text-sm text-stone-500">
+            {t('home.myGroups')}: {memberships.length}
+          </p>
+        )}
+      </div>
+
       {msg && <div className="bg-brand-100 text-stone-800 rounded-lg p-3 text-sm" onClick={() => setMsg(null)}>{msg}</div>}
+
+      {/* my committees — quick switch */}
+      {memberships.length > 1 && (
+        <div className="card p-0 overflow-hidden">
+          <div className="px-4 py-2.5 font-bold border-b border-stone-100 text-sm">🏛 {t('home.myGroups')}</div>
+          {memberships.map((m) => (
+            <button key={m.program_id}
+              onClick={() => setCurrentProgramId(m.program_id)}
+              className={`w-full flex items-center justify-between px-4 py-2.5 border-b border-stone-50 last:border-0 text-left text-sm hover:bg-brand-50 ${
+                m.program_id === currentProgramId ? 'bg-brand-50' : ''}`}>
+              <span className="min-w-0">
+                <span className="font-medium truncate block">
+                  {m.programs?.committees?.organizations?.name} · {m.programs?.name} {m.programs?.year}
+                </span>
+                <span className="text-xs text-stone-500">{t(`roles.${m.role}`)}</span>
+              </span>
+              {m.program_id === currentProgramId
+                ? <span className="chip-blue">✓</span>
+                : <span className="text-stone-300">›</span>}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* tasks assigned to me */}
+      {myTaskList.length > 0 && (
+        <div className="card p-0 overflow-hidden">
+          <div className="px-4 py-2.5 font-bold border-b border-stone-100 flex justify-between text-sm">
+            <span>📋 {t('home.myTasksTitle')}</span>
+            <Link to="/tasks" className="text-brand-600 font-semibold">{t('home.viewAll')} ›</Link>
+          </div>
+          {myTaskList.slice(0, 5).map((tk) => (
+            <Link key={tk.id} to="/tasks"
+              className="flex items-center justify-between px-4 py-2.5 border-b border-stone-50 last:border-0 text-sm hover:bg-brand-50">
+              <span className="min-w-0 flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full shrink-0 ${tk.status === 'in_progress' ? 'bg-blue-500' : 'bg-amber-500'}`} />
+                <span className="truncate">{tk.title}</span>
+              </span>
+              {tk.due_date && <span className="text-xs text-stone-500 shrink-0">{t('home.due')} {fmtDate(tk.due_date, i18n.language)}</span>}
+            </Link>
+          ))}
+        </div>
+      )}
 
       {showMoney && (
         <div className="grid grid-cols-2 gap-3">
@@ -236,7 +305,7 @@ export default function Dashboard() {
 
       {current && !showMoney && (
         <div className="card text-sm text-stone-500">
-          {t('auth.welcome')}, {current.display_name ?? current.email} · {t(`roles.${current.role}`)}
+          {t('auth.welcome')}, {profile?.nickname || current.display_name || current.email} · {t(`roles.${current.role}`)}
         </div>
       )}
     </div>

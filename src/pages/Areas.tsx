@@ -5,7 +5,7 @@ import { useApp } from '../state/AppContext';
 import { useUnits } from '../lib/units';
 import { Field, ErrorNote, friendlyError, Modal, Empty } from '../components/ui';
 import GpsPin from '../components/GpsPin';
-import type { Area, House, Membership } from '../lib/types';
+import { displayName, type Area, type House, type Membership } from '../lib/types';
 
 function getPosition(): Promise<{ lat: number; lng: number }> {
   return new Promise((resolve, reject) => {
@@ -96,7 +96,7 @@ export default function Areas() {
     const [a, h, m, paid] = await Promise.all([
       supabase.from('areas').select('*').eq('program_id', currentProgramId).order('name'),
       supabase.from('houses').select('*').eq('program_id', currentProgramId).order('sort_order').order('name'),
-      supabase.from('program_members').select('*').eq('program_id', currentProgramId),
+      supabase.from('program_members').select('*, profiles(nickname, full_name)').eq('program_id', currentProgramId),
       supabase.from('income_entries').select('house_id')
         .eq('program_id', currentProgramId).not('house_id', 'is', null).is('deleted_at', null),
     ]);
@@ -245,7 +245,7 @@ export default function Areas() {
 
   const memberName = (id: string) => {
     const m = members.find((x) => x.id === id);
-    return m?.display_name || m?.email || '';
+    return m ? displayName(m) : '';
   };
 
   const AreaBlock = ({ a }: { a: Area }) => {
@@ -514,7 +514,7 @@ export default function Areas() {
                 <button key={m.id} onClick={() => toggleTeam(editArea, m.id)}
                   className={`w-full flex items-center justify-between rounded-lg border p-3 text-left text-sm ${
                     on ? 'border-brand-600 bg-brand-50' : 'border-stone-200'}`}>
-                  <span>{m.display_name || m.email}</span>
+                  <span>{displayName(m)}</span>
                   <span>{on ? '✓' : ''}</span>
                 </button>
               );

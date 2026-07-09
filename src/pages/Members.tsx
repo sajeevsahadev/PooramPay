@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { Field, ErrorNote, friendlyError, Modal, Empty } from '../components/ui';
-import type { Membership, Perm, Role } from '../lib/types';
+import { displayName, type Membership, type Perm, type Role } from '../lib/types';
 
 const ROLES: Role[] = ['committee_admin', 'treasurer', 'collector', 'member', 'viewer'];
 const PERMS: Perm[] = ['view_money', 'collect', 'expense', 'approve', 'coupons', 'tasks'];
@@ -24,7 +24,7 @@ export default function Members() {
 
   const load = async () => {
     if (!currentProgramId) return;
-    const { data } = await supabase.from('program_members').select('*')
+    const { data } = await supabase.from('program_members').select('*, profiles(nickname, full_name)')
       .eq('program_id', currentProgramId).order('created_at');
     setMembers((data ?? []) as Membership[]);
   };
@@ -95,7 +95,7 @@ export default function Members() {
           <div key={m.id} className="card">
             <div className="flex justify-between items-center gap-2">
               <div className="min-w-0">
-                <div className="font-semibold truncate">{m.display_name || m.email}</div>
+                <div className="font-semibold truncate">{displayName(m)}</div>
                 <div className="text-xs text-stone-500 truncate">
                   {m.email} {!m.profile_id && <span className="chip-amber ml-1">⏳</span>}
                 </div>
@@ -138,7 +138,7 @@ export default function Members() {
       )}
 
       {editing && (
-        <Modal title={`${t('setup.permissions')} — ${editing.display_name || editing.email}`}
+        <Modal title={`${t('setup.permissions')} — ${displayName(editing)}`}
           onClose={() => setEditing(null)}>
           <div className="space-y-2">
             {PERMS.map((p) => {

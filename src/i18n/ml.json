@@ -119,6 +119,23 @@
     "member": "അംഗം",
     "viewer": "കാഴ്ചക്കാരൻ"
   },
+  "profile": {
+    "title": "എന്റെ പ്രൊഫൈൽ",
+    "nickname": "വിളിപ്പേര്",
+    "nicknameHint": "മറ്റ് അംഗങ്ങൾ ഈ പേര് കാണും.",
+    "nicknamePlaceholder": "ഉദാ. സജീവ്, കുമാർ ചേട്ടൻ"
+  },
+  "home": {
+    "morning": "സുപ്രഭാതം",
+    "afternoon": "നമസ്കാരം",
+    "evening": "ശുഭ സന്ധ്യ",
+    "myGroups": "എന്റെ കമ്മിറ്റികൾ",
+    "role": "ചുമതല",
+    "myTasksTitle": "എനിക്ക് നൽകിയവ",
+    "noTasks": "നിങ്ങൾക്ക് ജോലികളൊന്നും നൽകിയിട്ടില്ല",
+    "due": "അവസാന തീയതി",
+    "viewAll": "എല്ലാം കാണുക"
+  },
   "dashboard": {
     "cashInHand": "കയ്യിലുള്ള പണം",
     "bankBalance": "ബാങ്ക് ബാലൻസ്",

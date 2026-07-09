@@ -119,6 +119,23 @@
     "member": "Member",
     "viewer": "Viewer"
   },
+  "profile": {
+    "title": "My Profile",
+    "nickname": "Nickname",
+    "nicknameHint": "Other members will see this name.",
+    "nicknamePlaceholder": "e.g. Sajeev, Kumar chettan"
+  },
+  "home": {
+    "morning": "Good morning",
+    "afternoon": "Good afternoon",
+    "evening": "Good evening",
+    "myGroups": "My committees",
+    "role": "Role",
+    "myTasksTitle": "Assigned to me",
+    "noTasks": "No tasks assigned to you",
+    "due": "Due",
+    "viewAll": "View all"
+  },
   "dashboard": {
     "cashInHand": "Cash in Hand",
     "bankBalance": "Bank Balance",
