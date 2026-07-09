@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 export function Spinner() {
@@ -18,20 +20,28 @@ export function Empty({ label }: { label?: string }) {
 export function Modal({
   title, onClose, children,
 }: { title: string; onClose: () => void; children: React.ReactNode }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4"
-      onClick={onClose}>
-      <div
-        className="bg-surface w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[92vh] overflow-y-auto border border-stone-200 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="sticky top-0 bg-surface border-b border-stone-200 px-4 py-3 flex items-center justify-between">
+  // Lock background scroll and close on Escape while open.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onKey); };
+  }, [onClose]);
+
+  // Portal to <body> so ancestor CSS transforms can't trap this fixed overlay.
+  return createPortal(
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+        <div className="sticky top-0 bg-surface border-b border-stone-200 px-4 py-3 flex items-center justify-between z-10">
           <h2 className="font-bold text-lg">{title}</h2>
-          <button onClick={onClose} className="text-stone-400 text-2xl leading-none px-2">×</button>
+          <button onClick={onClose} aria-label="Close"
+            className="text-stone-400 hover:text-stone-700 text-2xl leading-none px-2 -mr-2">×</button>
         </div>
         <div className="p-4">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

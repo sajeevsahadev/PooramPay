@@ -91,6 +91,51 @@
   .bar-fill-red { height: 100%; border-radius: 9999px; background: #dc2626; }
 
   .page-enter { animation: fadeUp 0.25s ease both; }
+
+  /* Modal overlay — portaled to <body>, always covers the viewport */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;              /* bottom sheet on phones */
+    background: rgb(15 12 30 / 0.55);
+    backdrop-filter: blur(2px);
+    animation: backdropIn 0.18s ease both;
+  }
+  @media (min-width: 640px) {
+    .modal-backdrop { align-items: center; padding: 1rem; }  /* centered on larger screens */
+  }
+  .modal-panel {
+    width: 100%;
+    background: var(--color-surface);
+    border: 1px solid var(--color-stone-200);
+    border-radius: 1rem 1rem 0 0;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 -8px 40px rgb(0 0 0 / 0.25);
+    padding-bottom: env(safe-area-inset-bottom);   /* iPhone home-bar gap */
+    animation: sheetUp 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @media (min-width: 640px) {
+    .modal-panel {
+      max-width: 32rem;
+      border-radius: 1rem;
+      box-shadow: 0 20px 60px rgb(0 0 0 / 0.35);
+      animation: popIn 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+  }
+}
+
+@keyframes backdropIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheetUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes fadeUp {
