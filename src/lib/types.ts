@@ -35,6 +35,9 @@ export interface Organization {
   id: string;
   name: string;
   org_type: string;
+  country: string | null;
+  state: string | null;
+  district: string | null;
   place: string | null;
   created_by: string;
 }
