@@ -25,6 +25,7 @@ import DeletedTx from './pages/DeletedTx';
 import AdminConsole from './pages/AdminConsole';
 import Privacy from './pages/Privacy';
 import Profile from './pages/Profile';
+import AccessLog from './pages/AccessLog';
 
 export default function App() {
   const { session, profile, loading, memberships, isPadmin } = useApp();
@@ -72,6 +73,7 @@ export default function App() {
         <Route path="/audit" element={<AuditLog />} />
         <Route path="/deleted" element={<DeletedTx />} />
         <Route path="/admin" element={<AdminConsole />} />
+        <Route path="/access-log" element={<AccessLog />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<Dashboard />} />

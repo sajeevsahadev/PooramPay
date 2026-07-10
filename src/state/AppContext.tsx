@@ -4,6 +4,50 @@ import { supabase } from '../lib/supabase';
 import type { Finance, Membership, Perm, Profile, Program } from '../lib/types';
 import { setLanguage } from '../i18n';
 
+/** Friendly device string from the user agent, e.g. "Android · Chrome". */
+function parseDevice(ua: string): string {
+  const os = /android/i.test(ua) ? 'Android'
+    : /iphone|ipad|ipod/i.test(ua) ? 'iOS'
+    : /windows/i.test(ua) ? 'Windows'
+    : /mac os/i.test(ua) ? 'Mac'
+    : /linux/i.test(ua) ? 'Linux' : 'Unknown';
+  const br = /edg/i.test(ua) ? 'Edge'
+    : /opr|opera/i.test(ua) ? 'Opera'
+    : /chrome|crios/i.test(ua) ? 'Chrome'
+    : /firefox|fxios/i.test(ua) ? 'Firefox'
+    : /safari/i.test(ua) ? 'Safari' : 'Browser';
+  return `${os} · ${br}`;
+}
+
+// log a login event once per browser session
+let accessLogged = false;
+async function logAccess(profileId: string, email: string | null, programId: string | null) {
+  if (accessLogged || sessionStorage.getItem('pp-access-logged')) return;
+  accessLogged = true;
+  sessionStorage.setItem('pp-access-logged', '1');
+  let geo: { ip?: string; city?: string; region?: string; country?: string } = {};
+  try {
+    const r = await fetch('https://ipwho.is/');
+    if (r.ok) {
+      const d = await r.json();
+      if (d?.success !== false) geo = { ip: d.ip, city: d.city, region: d.region, country: d.country };
+    }
+  } catch { /* geolocation is best-effort */ }
+  try {
+    await supabase.from('access_log').insert({
+      profile_id: profileId,
+      email,
+      ip: geo.ip ?? null,
+      user_agent: navigator.userAgent,
+      device: parseDevice(navigator.userAgent),
+      city: geo.city ?? null,
+      region: geo.region ?? null,
+      country: geo.country ?? null,
+      program_id: programId,
+    });
+  } catch { /* never block the app on logging */ }
+}
+
 interface AppState {
   session: Session | null;
   profile: Profile | null;
@@ -58,7 +102,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ]);
     setProfile(prof as Profile);
     if (prof?.language) setLanguage(prof.language);
-    setMemberships((mems ?? []) as Membership[]);
+    const memList = (mems ?? []) as Membership[];
+    setMemberships(memList);
+    if (prof) logAccess((prof as Profile).id, (prof as Profile).email, memList[0]?.program_id ?? null);
     if ((prof as Profile | null)?.is_platform_admin) {
       // superadmin oversight: every program on the platform is selectable
       const { data: progs } = await supabase

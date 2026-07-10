@@ -103,6 +103,23 @@
     "now": "Update",
     "later": "Later"
   },
+  "install": {
+    "title": "Install PooramPay",
+    "body": "Add it to your home screen for a faster, app-like experience.",
+    "iosHelp": "Tap the Share button, then 'Add to Home Screen'.",
+    "btn": "Install",
+    "later": "Not now"
+  },
+  "access": {
+    "title": "Access Log",
+    "subtitle": "Every sign-in with IP, device and location. Visible only to platform admins.",
+    "time": "Time",
+    "user": "User",
+    "ip": "IP address",
+    "device": "Device",
+    "location": "Location",
+    "club": "Club"
+  },
   "auth": {
     "signInWithGoogle": "Sign in with Google",
     "signingIn": "Signing in...",
@@ -370,6 +387,9 @@
     "platformAdmins": "Platform Administrators",
     "addAdmin": "Add administrator email",
     "unfreeze": "Unfreeze",
-    "stats": "Usage"
+    "stats": "Usage",
+    "deleteOrg": "Delete organization",
+    "deleteOrgWarning": "This permanently deletes the organization and ALL its committees, programs, collections, expenses and records. This cannot be undone.",
+    "deleteOrgConfirm": "Type the organization name to confirm: {{name}}"
   }
 }

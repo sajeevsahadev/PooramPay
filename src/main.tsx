@@ -6,6 +6,7 @@ import './styles.css';
 import App from './App';
 import { AppProvider } from './state/AppContext';
 import UpdatePrompt from './components/UpdatePrompt';
+import InstallPrompt from './components/InstallPrompt';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -13,6 +14,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <AppProvider>
         <App />
         <UpdatePrompt />
+        <InstallPrompt />
       </AppProvider>
     </BrowserRouter>
   </React.StrictMode>,
