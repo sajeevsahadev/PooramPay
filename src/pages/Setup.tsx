@@ -5,6 +5,8 @@ import { useApp } from '../state/AppContext';
 import { Field, ErrorNote, friendlyError, Modal, StatusChip } from '../components/ui';
 import type { Committee, Organization, Program } from '../lib/types';
 
+import { COUNTRIES, statesOf, districtsOf } from '../lib/geo';
+
 const ORG_TYPES = ['temple', 'church', 'mosque', 'college', 'cultural', 'club', 'association', 'political', 'other'];
 const UNIT_LABELS = ['house', 'member', 'family', 'shop', 'unit'] as const;
 // sensible default register type per organization type
@@ -205,15 +207,31 @@ export default function Setup() {
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label={t('setup.country')}>
-              <input value={orgForm.country} onChange={(e) => setOrgForm({ ...orgForm, country: e.target.value })} />
+              <select value={orgForm.country}
+                onChange={(e) => {
+                  const country = e.target.value;
+                  const state = statesOf(country)[0] ?? '';
+                  setOrgForm({ ...orgForm, country, state, district: districtsOf(state)[0] ?? '' });
+                }}>
+                {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
             </Field>
             <Field label={t('setup.state')}>
-              <input value={orgForm.state} onChange={(e) => setOrgForm({ ...orgForm, state: e.target.value })} />
+              <select value={orgForm.state}
+                onChange={(e) => {
+                  const state = e.target.value;
+                  setOrgForm({ ...orgForm, state, district: districtsOf(state)[0] ?? '' });
+                }}>
+                {statesOf(orgForm.country).map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
             </Field>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Field label={t('setup.district')}>
-              <input value={orgForm.district} onChange={(e) => setOrgForm({ ...orgForm, district: e.target.value })} />
+              <select value={orgForm.district}
+                onChange={(e) => setOrgForm({ ...orgForm, district: e.target.value })}>
+                {districtsOf(orgForm.state).map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
             </Field>
             <Field label={t('setup.place')}>
               <input value={orgForm.place} onChange={(e) => setOrgForm({ ...orgForm, place: e.target.value })} />
