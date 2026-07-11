@@ -61,6 +61,12 @@ export interface Program {
   weekly_amount: number | null;
   total_weeks: number;
   unit_label: UnitLabel;
+  results_published: boolean;
+  results_published_at: string | null;
+  results_snapshot: {
+    opening_balance: number; income_total: number; expense_total: number; retained: number;
+    published_at: string;
+  } | null;
   committees?: Committee & { organizations?: Organization };
 }
 

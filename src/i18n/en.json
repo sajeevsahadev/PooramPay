@@ -151,7 +151,8 @@
     "myTasksTitle": "Assigned to me",
     "noTasks": "No tasks assigned to you",
     "due": "Due",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "myCollected": "Collected by me"
   },
   "dashboard": {
     "cashInHand": "Cash in Hand",
@@ -285,7 +286,17 @@
     "byArea": "By area",
     "byCollector": "By collector",
     "byHead": "By head",
-    "retainedNote": "Retained balance to carry forward to next year's program"
+    "retainedNote": "Retained balance to carry forward to next year's program",
+    "finalResults": "Final signed results",
+    "pendingTitle": "Accounts not published yet",
+    "pendingBody": "The final income & expenditure and remaining balance will appear here once the committee closes and digitally signs the accounts at the end of the programme.",
+    "publishedOn": "Published on",
+    "signHint": "When the programme is over, the committee approves and digitally signs the final accounts to publish them to all members.",
+    "signPublish": "Approve & sign final accounts",
+    "addSignature": "Add my signature",
+    "signConfirm": "Approve and digitally sign the final accounts? This publishes the final income, expenditure and remaining balance to all members.",
+    "signedOk": "Signed. Final accounts are now published to all members.",
+    "signedBy": "Digitally signed by"
   },
   "setup": {
     "title": "Setup",

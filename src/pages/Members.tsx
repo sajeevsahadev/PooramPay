@@ -51,7 +51,7 @@ export default function Members() {
     treasurer: { view_money: true, collect: true, expense: true, approve: true, coupons: true, tasks: true },
     collector: { view_money: false, collect: true, expense: true, approve: false, coupons: true, tasks: false },
     member: { view_money: false, collect: false, expense: true, approve: false, coupons: false, tasks: false },
-    viewer: { view_money: true, collect: false, expense: false, approve: false, coupons: true, tasks: false },
+    viewer: { view_money: false, collect: false, expense: false, approve: false, coupons: true, tasks: false },
   };
 
   const updateRole = async (m: Membership, role: Role) => {

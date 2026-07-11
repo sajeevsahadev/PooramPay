@@ -23,6 +23,16 @@ export default function Dashboard() {
     { id: string; title: string; status: string; due_date: string | null }[]
   >([]);
   const myTasks = myTaskList.length;
+  const [myCollected, setMyCollected] = useState(0);
+
+  // non-finance members: show their OWN collection (org totals stay hidden)
+  useEffect(() => {
+    if (!currentProgramId || can('view_money')) return;
+    supabase.from('income_entries').select('amount')
+      .eq('program_id', currentProgramId).eq('collected_by', session!.user.id).is('deleted_at', null)
+      .then(({ data }) => setMyCollected((data ?? []).reduce((s, r) => s + Number(r.amount), 0)));
+    // eslint-disable-next-line
+  }, [currentProgramId]);
   const [budgetExpense, setBudgetExpense] = useState(0);
   const [incomeByType, setIncomeByType] = useState<{ label: string; value: number }[]>([]);
   const [dailyIncome, setDailyIncome] = useState<number[]>([]);
@@ -303,9 +313,10 @@ export default function Dashboard() {
         </div>
       )}
 
-      {current && !showMoney && (
-        <div className="card text-sm text-stone-500">
-          {t('auth.welcome')}, {profile?.nickname || current.display_name || current.email} · {t(`roles.${current.role}`)}
+      {!showMoney && (
+        <div className="stat stat-green">
+          <div className="stat-label">🙌 {t('home.myCollected')}</div>
+          <div className="stat-value text-2xl font-black money">{fmtINR(myCollected)}</div>
         </div>
       )}
     </div>
