@@ -1,18 +1,80 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#6366f1"/>
-      <stop offset="0.55" stop-color="#7c3aed"/>
-      <stop offset="1" stop-color="#4338ca"/>
+    <radialGradient id="bg" cx="0.5" cy="0.42" r="0.85">
+      <stop offset="0" stop-color="#2a1c56"/>
+      <stop offset="0.6" stop-color="#160e33"/>
+      <stop offset="1" stop-color="#0b0720"/>
+    </radialGradient>
+    <linearGradient id="ele" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5b46a8"/>
+      <stop offset="1" stop-color="#382a70"/>
     </linearGradient>
-    <linearGradient id="ru" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#4338ca"/>
-      <stop offset="1" stop-color="#7c3aed"/>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe9a8"/>
+      <stop offset="1" stop-color="#f0a92a"/>
     </linearGradient>
+    <linearGradient id="tusk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#d8d2ea"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softglow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="9" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
   </defs>
   <rect width="512" height="512" fill="url(#bg)"/>
-  <!-- content kept within the maskable safe zone (center 80%) -->
-  <circle cx="256" cy="256" r="120" fill="#ffffff"/>
-  <circle cx="256" cy="256" r="120" fill="none" stroke="#e0e7ff" stroke-width="9"/>
-  <text x="256" y="308" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="165" font-weight="800" fill="url(#ru)">₹</text>
+  <!-- art scaled to ~82% and centered to stay inside the maskable safe zone -->
+  <g transform="translate(46,46) scale(0.82)">
+    <g filter="url(#softglow)">
+      <rect x="251" y="150" width="10" height="96" rx="5" fill="url(#gold)"/>
+      <line x1="256" y1="52" x2="256" y2="26" stroke="#ffe9a8" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="256" cy="22" r="8" fill="#ffe9a8"/>
+      <g stroke="#ffe9a8" stroke-width="2.5" stroke-linejoin="round">
+        <path d="M256 170 L376 170 A120 120 0 0 0 366.9 124.1 Z" fill="#ff2e88"/>
+        <path d="M256 170 L366.9 124.1 A120 120 0 0 0 340.9 85.1 Z" fill="#ff8a00"/>
+        <path d="M256 170 L340.9 85.1 A120 120 0 0 0 301.9 59.1 Z" fill="#ffd60a"/>
+        <path d="M256 170 L301.9 59.1 A120 120 0 0 0 256 50 Z" fill="#35ff9e"/>
+        <path d="M256 170 L256 50 A120 120 0 0 0 210.1 59.1 Z" fill="#12e6ff"/>
+        <path d="M256 170 L210.1 59.1 A120 120 0 0 0 171.1 85.1 Z" fill="#4d7cff"/>
+        <path d="M256 170 L171.1 85.1 A120 120 0 0 0 145.1 124.1 Z" fill="#b56bff"/>
+        <path d="M256 170 L145.1 124.1 A120 120 0 0 0 136 170 Z" fill="#ff4de0"/>
+      </g>
+      <path d="M136 170 q15 20 30 0 q15 20 30 0 q15 20 30 0 q15 20 30 0 q15 20 30 0 q15 20 30 0 q15 20 30 0 q15 20 30 0"
+        fill="none" stroke="#ffe9a8" stroke-width="6"/>
+      <g>
+        <circle cx="166" cy="192" r="6" fill="#12e6ff"/>
+        <circle cx="226" cy="192" r="6" fill="#ffd60a"/>
+        <circle cx="286" cy="192" r="6" fill="#ff2e88"/>
+        <circle cx="346" cy="192" r="6" fill="#35ff9e"/>
+      </g>
+    </g>
+    <g fill="url(#ele)" stroke="#8f6bff" stroke-width="3">
+      <ellipse cx="178" cy="352" rx="78" ry="96" transform="rotate(-16 178 352)"/>
+      <ellipse cx="334" cy="352" rx="78" ry="96" transform="rotate(16 334 352)"/>
+    </g>
+    <ellipse cx="256" cy="356" rx="106" ry="116" fill="url(#ele)" stroke="#8f6bff" stroke-width="3"/>
+    <path d="M236 426 Q222 480 256 502 Q290 480 276 426 Z" fill="url(#ele)" stroke="#8f6bff" stroke-width="3"/>
+    <g fill="url(#tusk)">
+      <path d="M234 440 C 214 462 212 486 226 502 C 232 486 236 462 250 450 Z"/>
+      <path d="M278 440 C 298 462 300 486 286 502 C 280 486 276 462 262 450 Z"/>
+    </g>
+    <g filter="url(#glow)">
+      <circle cx="204" cy="352" r="9" fill="#12e6ff"/>
+      <circle cx="308" cy="352" r="9" fill="#12e6ff"/>
+    </g>
+    <path d="M196 344 Q186 268 256 250 Q326 268 316 344 Q314 368 300 376 L256 404 L212 376 Q198 368 196 344 Z"
+      fill="url(#gold)" stroke="#fff2cf" stroke-width="3"/>
+    <line x1="256" y1="250" x2="256" y2="232" stroke="#ffe9a8" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="256" cy="228" r="6" fill="#ffe9a8"/>
+    <g filter="url(#glow)">
+      <g fill="#12e6ff"><circle cx="236" cy="284" r="10"/><circle cx="256" cy="280" r="10"/><circle cx="276" cy="284" r="10"/></g>
+      <g fill="#ff2e88"><circle cx="220" cy="312" r="10"/><circle cx="248" cy="310" r="10"/><circle cx="276" cy="312" r="10"/></g>
+      <g fill="#35ff9e"><circle cx="238" cy="340" r="9"/><circle cx="262" cy="340" r="9"/></g>
+      <path d="M256 366 l14 18 -14 20 -14 -20 Z" fill="#b56bff"/>
+    </g>
+  </g>
 </svg>
