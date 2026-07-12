@@ -1,94 +1,105 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <radialGradient id="bg" cx="0.5" cy="0.42" r="0.75">
-      <stop offset="0" stop-color="#2a1c56"/>
-      <stop offset="0.6" stop-color="#160e33"/>
-      <stop offset="1" stop-color="#0b0720"/>
+    <radialGradient id="bg" cx="0.5" cy="0.45" r="0.75">
+      <stop offset="0" stop-color="#4a1a72"/>
+      <stop offset="0.6" stop-color="#280c42"/>
+      <stop offset="1" stop-color="#140724"/>
     </radialGradient>
-    <linearGradient id="ele" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#5b46a8"/>
-      <stop offset="1" stop-color="#382a70"/>
+    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffd86b" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#ffd86b" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="goldG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe98a"/>
+      <stop offset="0.5" stop-color="#f7b52e"/>
+      <stop offset="1" stop-color="#dd8c12"/>
     </linearGradient>
-    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffe9a8"/>
-      <stop offset="1" stop-color="#f0a92a"/>
-    </linearGradient>
-    <linearGradient id="tusk" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff"/>
-      <stop offset="1" stop-color="#d8d2ea"/>
-    </linearGradient>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="4" result="b"/>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3.2" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <filter id="softglow" x="-60%" y="-60%" width="220%" height="220%">
-      <feGaussianBlur stdDeviation="9" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
+    <!-- reusable sunburst rosette centered at origin -->
+    <g id="burst">
+      <g fill="#ef9f1c">
+        <circle cx="22" cy="0" r="8.5"/><circle cx="15.6" cy="-15.6" r="8.5"/>
+        <circle cx="0" cy="-22" r="8.5"/><circle cx="-15.6" cy="-15.6" r="8.5"/>
+        <circle cx="-22" cy="0" r="8.5"/><circle cx="-15.6" cy="15.6" r="8.5"/>
+        <circle cx="0" cy="22" r="8.5"/><circle cx="15.6" cy="15.6" r="8.5"/>
+      </g>
+      <circle r="19" fill="#f7b52e"/>
+      <circle r="12.5" fill="#ffe488"/>
+    </g>
+    <!-- left-side wool pom-poms -->
+    <g id="poms">
+      <g fill="#18cc3a"><circle cx="128" cy="182" r="12"/><circle cx="118" cy="196" r="12"/><circle cx="134" cy="200" r="11"/></g>
+      <g><circle cx="120" cy="256" r="12" fill="#ff2a3a"/><circle cx="110" cy="270" r="12" fill="#ff7a00"/><circle cx="128" cy="274" r="11" fill="#ffd60a"/></g>
+      <g><circle cx="150" cy="326" r="11" fill="#ffffff"/><circle cx="140" cy="340" r="11" fill="#18cc3a"/><circle cx="158" cy="343" r="10" fill="#ffffff"/></g>
+      <g><circle cx="196" cy="388" r="10" fill="#ff7a00"/><circle cx="206" cy="400" r="10" fill="#ffd60a"/><circle cx="190" cy="402" r="9" fill="#ff2a3a"/></g>
+    </g>
   </defs>
 
   <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <ellipse cx="256" cy="288" rx="185" ry="215" fill="url(#halo)"/>
 
-  <!-- ===== Kudamattam parasol (neon segments) ===== -->
-  <g filter="url(#softglow)">
-    <!-- pole into the elephant -->
-    <rect x="251" y="150" width="10" height="96" rx="5" fill="url(#gold)"/>
-    <!-- finial -->
-    <line x1="256" y1="52" x2="256" y2="26" stroke="#ffe9a8" stroke-width="5" stroke-linecap="round"/>
-    <circle cx="256" cy="22" r="8" fill="#ffe9a8"/>
-    <!-- neon rib segments (8) -->
-    <g stroke="#ffe9a8" stroke-width="2.5" stroke-linejoin="round">
-      <path d="M256 170 L376 170 A120 120 0 0 0 366.9 124.1 Z" fill="#ff2e88"/>
-      <path d="M256 170 L366.9 124.1 A120 120 0 0 0 340.9 85.1 Z" fill="#ff8a00"/>
-      <path d="M256 170 L340.9 85.1 A120 120 0 0 0 301.9 59.1 Z" fill="#ffd60a"/>
-      <path d="M256 170 L301.9 59.1 A120 120 0 0 0 256 50 Z" fill="#35ff9e"/>
-      <path d="M256 170 L256 50 A120 120 0 0 0 210.1 59.1 Z" fill="#12e6ff"/>
-      <path d="M256 170 L210.1 59.1 A120 120 0 0 0 171.1 85.1 Z" fill="#4d7cff"/>
-      <path d="M256 170 L171.1 85.1 A120 120 0 0 0 145.1 124.1 Z" fill="#b56bff"/>
-      <path d="M256 170 L145.1 124.1 A120 120 0 0 0 136 170 Z" fill="#ff4de0"/>
-    </g>
-    <!-- scalloped hem -->
-    <path d="M136 170 q15 20 30 0 q15 20 30 0 q15 20 30 0 q15 20 30 0 q15 20 30 0 q15 20 30 0 q15 20 30 0 q15 20 30 0"
-      fill="none" stroke="#ffe9a8" stroke-width="6"/>
-    <!-- hanging beads -->
-    <g>
-      <circle cx="166" cy="192" r="6" fill="#12e6ff"/>
-      <circle cx="226" cy="192" r="6" fill="#ffd60a"/>
-      <circle cx="286" cy="192" r="6" fill="#ff2e88"/>
-      <circle cx="346" cy="192" r="6" fill="#35ff9e"/>
-    </g>
-  </g>
-
-  <!-- ===== Elephant ===== -->
-  <!-- ears (mirror pair) -->
-  <g fill="url(#ele)" stroke="#8f6bff" stroke-width="3">
-    <ellipse cx="178" cy="352" rx="78" ry="96" transform="rotate(-16 178 352)"/>
-    <ellipse cx="334" cy="352" rx="78" ry="96" transform="rotate(16 334 352)"/>
-  </g>
-  <!-- head -->
-  <ellipse cx="256" cy="356" rx="106" ry="116" fill="url(#ele)" stroke="#8f6bff" stroke-width="3"/>
-  <!-- trunk -->
-  <path d="M236 426 Q222 480 256 502 Q290 480 276 426 Z" fill="url(#ele)" stroke="#8f6bff" stroke-width="3"/>
-  <!-- tusks (mirror pair) -->
-  <g fill="url(#tusk)">
-    <path d="M234 440 C 214 462 212 486 226 502 C 232 486 236 462 250 450 Z"/>
-    <path d="M278 440 C 298 462 300 486 286 502 C 280 486 276 462 262 450 Z"/>
-  </g>
-  <!-- eyes -->
+  <!-- side wool tufts (behind the shield) -->
   <g filter="url(#glow)">
-    <circle cx="204" cy="352" r="9" fill="#12e6ff"/>
-    <circle cx="308" cy="352" r="9" fill="#12e6ff"/>
+    <use href="#poms"/>
+    <use href="#poms" transform="translate(512,0) scale(-1,1)"/>
   </g>
 
-  <!-- ===== Nettipattam (golden caparison with neon studs) ===== -->
-  <path d="M196 344 Q186 268 256 250 Q326 268 316 344 Q314 368 300 376 L256 404 L212 376 Q198 368 196 344 Z"
-    fill="url(#gold)" stroke="#fff2cf" stroke-width="3"/>
-  <line x1="256" y1="250" x2="256" y2="232" stroke="#ffe9a8" stroke-width="4" stroke-linecap="round"/>
-  <circle cx="256" cy="228" r="6" fill="#ffe9a8"/>
+  <!-- ===== the caparison (nettipattam) body ===== -->
+  <path d="M150 152 L362 152 C374 250 322 372 256 438 C190 372 138 250 150 152 Z"
+    fill="url(#goldG)" stroke="#b56d09" stroke-width="3"/>
+  <!-- beaded borders -->
+  <path d="M150 152 L362 152 C374 250 322 372 256 438 C190 372 138 250 150 152 Z"
+    fill="none" stroke="#fff2c4" stroke-width="7" stroke-linecap="round" stroke-dasharray="0.5 10"/>
+  <path d="M168 168 L344 168 C352 250 306 356 256 412 C206 356 160 250 168 168 Z"
+    fill="none" stroke="#c9860f" stroke-width="5" stroke-linecap="round" stroke-dasharray="0.5 11"/>
+
+  <!-- ===== red top band ===== -->
+  <rect x="112" y="80" width="288" height="60" rx="12" fill="url(#goldG)"/>
+  <rect x="122" y="90" width="268" height="40" rx="7" fill="#e11d2b"/>
+  <g fill="#ffe488" stroke="#c9860f" stroke-width="1.5">
+    <circle cx="152" cy="110" r="7"/><circle cx="204" cy="110" r="7"/><circle cx="256" cy="110" r="7"/>
+    <circle cx="308" cy="110" r="7"/><circle cx="360" cy="110" r="7"/>
+  </g>
+
+  <!-- ===== sunburst rosettes with bright gems ===== -->
+  <use href="#burst" transform="translate(256,188)"/>
+  <use href="#burst" transform="translate(198,220) scale(0.8)"/>
+  <use href="#burst" transform="translate(314,220) scale(0.8)"/>
   <g filter="url(#glow)">
-    <g fill="#12e6ff"><circle cx="236" cy="284" r="10"/><circle cx="256" cy="280" r="10"/><circle cx="276" cy="284" r="10"/></g>
-    <g fill="#ff2e88"><circle cx="220" cy="312" r="10"/><circle cx="248" cy="310" r="10"/><circle cx="276" cy="312" r="10"/></g>
-    <g fill="#35ff9e"><circle cx="238" cy="340" r="9"/><circle cx="262" cy="340" r="9"/></g>
-    <path d="M256 366 l14 18 -14 20 -14 -20 Z" fill="#b56bff"/>
+    <circle cx="256" cy="188" r="10" fill="#14e0ff"/>
+    <circle cx="198" cy="220" r="8" fill="#ff2e88"/>
+    <circle cx="314" cy="220" r="8" fill="#2bff88"/>
+  </g>
+  <g fill="#ffffff" opacity="0.85">
+    <circle cx="252" cy="184" r="2.6"/><circle cx="195" cy="217" r="2.2"/><circle cx="311" cy="217" r="2.2"/>
+  </g>
+
+  <!-- ===== central crescent column ===== -->
+  <g fill="none" stroke="url(#goldG)" stroke-width="8" stroke-linecap="round">
+    <path d="M224 262 Q256 280 288 262"/>
+    <path d="M228 286 Q256 302 284 286"/>
+    <path d="M232 308 Q256 322 280 308"/>
+    <path d="M236 328 Q256 340 276 328"/>
+    <path d="M240 346 Q256 356 272 346"/>
+  </g>
+  <g filter="url(#glow)">
+    <circle cx="256" cy="280" r="5.5" fill="#ff2e88"/>
+    <circle cx="256" cy="302" r="5" fill="#14e0ff"/>
+    <circle cx="256" cy="322" r="4.5" fill="#2bff88"/>
+    <circle cx="256" cy="340" r="4" fill="#ffd60a"/>
+  </g>
+
+  <!-- bottom rosette + tassel -->
+  <use href="#burst" transform="translate(256,384) scale(0.62)"/>
+  <circle cx="256" cy="384" r="7" fill="#ff7a1a" filter="url(#glow)"/>
+  <rect x="252" y="438" width="8" height="16" rx="3" fill="url(#goldG)"/>
+  <circle cx="256" cy="456" r="7" fill="#f7b52e"/>
+  <g>
+    <rect x="243" y="460" width="6" height="22" rx="3" fill="#e11d2b"/>
+    <rect x="253" y="460" width="6" height="24" rx="3" fill="#ffd60a"/>
+    <rect x="263" y="460" width="6" height="22" rx="3" fill="#18cc3a"/>
   </g>
 </svg>
