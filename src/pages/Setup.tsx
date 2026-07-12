@@ -13,6 +13,18 @@ const DEFAULT_UNIT: Record<string, string> = {
   college: 'member', cultural: 'member', club: 'member', political: 'member', other: 'house',
 };
 
+type ManageKind = 'org' | 'committee' | 'program';
+
+/** Small rename/delete icon pair, shown only to those who can manage the item. */
+function ManageBtns({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
+  return (
+    <span className="flex items-center gap-0.5 shrink-0">
+      <button className="text-stone-300 hover:text-brand-700 px-1" onClick={onEdit}>✏️</button>
+      <button className="text-stone-300 hover:text-red-600 px-1" onClick={onDelete}>🗑</button>
+    </span>
+  );
+}
+
 /** Organization → Committee → yearly Program management, incl. freeze. */
 export default function Setup() {
   const { t } = useTranslation();
@@ -31,6 +43,10 @@ export default function Setup() {
     unitLabel: 'house', copyFrom: '' as string,
   });
   const [copiedMsg, setCopiedMsg] = useState<string | null>(null);
+  const [rename, setRename] = useState<{ kind: ManageKind; id: string; name: string } | null>(null);
+  const [renameVal, setRenameVal] = useState('');
+  const [del, setDel] = useState<{ kind: ManageKind; id: string; name: string } | null>(null);
+  const [delConfirm, setDelConfirm] = useState('');
 
   const load = async () => {
     const [o, c, p] = await Promise.all([
@@ -101,6 +117,46 @@ export default function Setup() {
   const canFreeze = (p: Program) =>
     isPadmin || memberships.some((m) => m.program_id === p.id && m.role === 'committee_admin');
 
+  const myUid = session!.user.id;
+  const canManageOrg = (o: Organization) => isPadmin || o.created_by === myUid;
+  const canManageCommittee = (o: Organization, committeeId: string) =>
+    isPadmin || o.created_by === myUid ||
+    memberships.some((m) => m.role === 'committee_admin' && m.programs?.committee_id === committeeId);
+
+  const openRename = (kind: ManageKind, id: string, name: string) => {
+    setErr(null); setRenameVal(name); setRename({ kind, id, name });
+  };
+  const openDelete = (kind: ManageKind, id: string, name: string) => {
+    setErr(null); setDelConfirm(''); setDel({ kind, id, name });
+  };
+  const tableOf = (kind: ManageKind) =>
+    kind === 'org' ? 'organizations' : kind === 'committee' ? 'committees' : 'programs';
+
+  const doRename = async () => {
+    if (!rename) return;
+    setBusy(true); setErr(null);
+    try {
+      await supabase.from(tableOf(rename.kind)).update({ name: renameVal.trim() }).eq('id', rename.id).throwOnError();
+      setRename(null);
+      await Promise.all([load(), refresh()]);
+    } catch (e) { setErr(friendlyError(e)); }
+    setBusy(false);
+  };
+
+  const doDelete = async () => {
+    if (!del) return;
+    setBusy(true); setErr(null);
+    try {
+      await supabase.from(tableOf(del.kind)).delete().eq('id', del.id).throwOnError();
+      setDel(null); setDelConfirm('');
+      await Promise.all([load(), refresh()]);
+    } catch (e) {
+      const msg = String((e as { message?: string })?.message ?? '');
+      setErr(msg.includes('CANNOT_DELETE_FROZEN') ? t('setup.cannotDeleteFrozen') : friendlyError(e));
+    }
+    setBusy(false);
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -127,18 +183,28 @@ export default function Setup() {
                   ` · ${[org.place, org.district, org.state].filter(Boolean).join(', ')}`}
               </div>
             </div>
-            {(isPadmin || org.created_by === session!.user.id) && (
-              <button className="btn-secondary text-xs" onClick={() => setShowCommittee(org.id)}>
-                ＋ {t('setup.newCommittee')}
-              </button>
+            {canManageOrg(org) && (
+              <div className="flex items-center gap-1 shrink-0">
+                <ManageBtns onEdit={() => openRename('org', org.id, org.name)}
+                  onDelete={() => openDelete('org', org.id, org.name)} />
+                <button className="btn-secondary text-xs" onClick={() => setShowCommittee(org.id)}>
+                  ＋ {t('setup.newCommittee')}
+                </button>
+              </div>
             )}
           </div>
           {committees.filter((c) => c.organization_id === org.id).map((c) => (
             <div key={c.id} className="border-t border-stone-100 pt-2 mt-2">
-              <div className="flex justify-between items-center">
-                <div className="font-semibold text-sm">🏛 {c.name}</div>
-                {(isPadmin || org.created_by === session!.user.id) && (
-                  <button className="text-brand-600 text-xs font-semibold"
+              <div className="flex justify-between items-center gap-2">
+                <div className="flex items-center gap-1 min-w-0">
+                  <div className="font-semibold text-sm truncate">🏛 {c.name}</div>
+                  {canManageCommittee(org, c.id) && (
+                    <ManageBtns onEdit={() => openRename('committee', c.id, c.name)}
+                      onDelete={() => openDelete('committee', c.id, c.name)} />
+                  )}
+                </div>
+                {canManageOrg(org) && (
+                  <button className="text-brand-600 text-xs font-semibold shrink-0"
                     onClick={() => {
                       const prev = programs.filter((p) => p.committee_id === c.id)
                         .sort((a, b) => b.year - a.year)[0];
@@ -154,16 +220,22 @@ export default function Setup() {
                 )}
               </div>
               {programs.filter((p) => p.committee_id === c.id).map((p) => (
-                <div key={p.id} className="flex items-center justify-between py-1.5 pl-4 text-sm">
-                  <span>
+                <div key={p.id} className="flex items-center justify-between gap-2 py-1.5 pl-4 text-sm">
+                  <span className="min-w-0 truncate">
                     {p.name} <b>{p.year}</b> <StatusChip status={p.status} />
                     {current?.program_id === p.id && <span className="chip-blue ml-1">✓</span>}
                   </span>
-                  {canFreeze(p) && (
-                    p.status === 'active'
-                      ? <button className="text-stone-500 text-xs underline" onClick={() => freeze(p)}>❄️ {t('setup.freeze')}</button>
-                      : isPadmin && <button className="text-stone-500 text-xs underline" onClick={() => unfreeze(p)}>{t('admin.unfreeze')}</button>
-                  )}
+                  <span className="flex items-center gap-1 shrink-0">
+                    {canFreeze(p) && (
+                      p.status === 'active'
+                        ? <button className="text-stone-500 text-xs underline" onClick={() => freeze(p)}>❄️ {t('setup.freeze')}</button>
+                        : isPadmin && <button className="text-stone-500 text-xs underline" onClick={() => unfreeze(p)}>{t('admin.unfreeze')}</button>
+                    )}
+                    {canManageCommittee(org, c.id) && (p.status !== 'frozen' || isPadmin) && (
+                      <ManageBtns onEdit={() => openRename('program', p.id, p.name)}
+                        onDelete={() => openDelete('program', p.id, p.name)} />
+                    )}
+                  </span>
                 </div>
               ))}
             </div>
@@ -238,6 +310,32 @@ export default function Setup() {
           })()}
           <button className="btn-primary w-full" disabled={busy} onClick={saveProgram}>
             {t('common.save')}
+          </button>
+        </Modal>
+      )}
+
+      {rename && (
+        <Modal title={t('setup.rename')} onClose={() => setRename(null)}>
+          <Field label={t('common.name')}>
+            <input value={renameVal} autoFocus onChange={(e) => setRenameVal(e.target.value)} />
+          </Field>
+          <button className="btn-primary w-full" disabled={busy || !renameVal.trim()} onClick={doRename}>
+            {t('common.save')}
+          </button>
+        </Modal>
+      )}
+
+      {del && (
+        <Modal title={`${t('common.delete')}: ${del.name}`} onClose={() => { setDel(null); setDelConfirm(''); }}>
+          <p className="text-sm text-stone-600 mb-3">
+            {t(del.kind === 'org' ? 'setup.deleteWarnOrg'
+              : del.kind === 'committee' ? 'setup.deleteWarnCommittee' : 'setup.deleteWarnProgram')}
+          </p>
+          <Field label={t('setup.typeToConfirm', { name: del.name })}>
+            <input value={delConfirm} autoFocus onChange={(e) => setDelConfirm(e.target.value)} />
+          </Field>
+          <button className="btn-danger w-full" disabled={busy || delConfirm.trim() !== del.name} onClick={doDelete}>
+            {t('common.delete')}
           </button>
         </Modal>
       )}

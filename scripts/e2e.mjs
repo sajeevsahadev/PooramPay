@@ -257,6 +257,35 @@ const { data: goneArea } = await admin.client.from('areas').select('id').eq('id'
 ok('deleted area is gone', (goneArea?.length ?? 0) === 0);
 await admin.client.from('areas').update({ is_active: true }).eq('id', area.id); // restore for later checks
 
+console.log('== rename & delete permissions ==');
+// non-admin: RLS filters the row out, so the write silently affects 0 rows
+await collector.client.from('committees').update({ name: 'HACKED' }).eq('id', com.id);
+const { data: comName } = await admin.client.from('committees').select('name').eq('id', com.id).single();
+ok('non-admin cannot rename committee', comName?.name === 'E2E Ganamela', `name=${comName?.name}`);
+await collector.client.from('programs').delete().eq('id', pid);
+const { data: progStill } = await admin.client.from('programs').select('id').eq('id', pid);
+ok('non-admin cannot delete program', (progStill?.length ?? 0) === 1);
+
+// committee admin can rename
+await admin.client.from('programs').update({ name: 'E2E Utsavam Renamed' }).eq('id', pid);
+const { data: renamed } = await admin.client.from('programs').select('name').eq('id', pid).single();
+ok('committee admin renames program', renamed?.name === 'E2E Utsavam Renamed');
+
+// committee admin can delete an active program
+const { data: tmpProg } = await admin.client.from('programs')
+  .insert({ committee_id: com.id, name: 'E2E Temp', year: 2025, created_by: admin.id }).select().single();
+const { error: delActiveErr } = await admin.client.from('programs').delete().eq('id', tmpProg.id);
+ok('committee admin deletes active program', !delActiveErr, delActiveErr?.message);
+const { data: tmpGone } = await admin.client.from('programs').select('id').eq('id', tmpProg.id);
+ok('deleted program is gone', (tmpGone?.length ?? 0) === 0);
+
+// but a frozen program is protected from deletion (padmin only)
+const { data: frzProg } = await admin.client.from('programs')
+  .insert({ committee_id: com.id, name: 'E2E Frozen', year: 2024, created_by: admin.id }).select().single();
+await admin.client.from('programs').update({ status: 'frozen' }).eq('id', frzProg.id);
+await expectError('committee admin cannot delete frozen program',
+  admin.client.from('programs').delete().eq('id', frzProg.id).select(), 'CANNOT_DELETE_FROZEN');
+
 console.log('== freeze ==');
 const { error: frErr } = await admin.client.from('programs').update({ status: 'frozen' }).eq('id', pid);
 ok('committee admin freezes program', !frErr, frErr?.message);
