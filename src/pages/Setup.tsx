@@ -2,12 +2,10 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
+import { useNavigate } from 'react-router-dom';
 import { Field, ErrorNote, friendlyError, Modal, StatusChip } from '../components/ui';
 import type { Committee, Organization, Program } from '../lib/types';
 
-import { COUNTRIES, statesOf, districtsOf } from '../lib/geo';
-
-const ORG_TYPES = ['temple', 'church', 'mosque', 'college', 'cultural', 'club', 'association', 'political', 'other'];
 const UNIT_LABELS = ['house', 'member', 'family', 'shop', 'unit'] as const;
 // sensible default register type per organization type
 const DEFAULT_UNIT: Record<string, string> = {
@@ -19,16 +17,14 @@ const DEFAULT_UNIT: Record<string, string> = {
 export default function Setup() {
   const { t } = useTranslation();
   const { session, refresh, isPadmin, memberships, current } = useApp();
+  const nav = useNavigate();
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [committees, setCommittees] = useState<Committee[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [showOrg, setShowOrg] = useState(false);
   const [showCommittee, setShowCommittee] = useState<string | null>(null); // org id
   const [showProgram, setShowProgram] = useState<Committee | null>(null);
-  const ORG_DEFAULT = { name: '', type: 'cultural', country: 'India', state: 'Kerala', district: 'Thrissur', place: '' };
-  const [orgForm, setOrgForm] = useState({ ...ORG_DEFAULT });
   const [comForm, setComForm] = useState({ name: '', desc: '' });
   const [progForm, setProgForm] = useState({
     name: '', year: String(new Date().getFullYear()), opening: '0', weekly: '', weeks: '52',
@@ -47,23 +43,6 @@ export default function Setup() {
     setPrograms((p.data ?? []) as Program[]);
   };
   useEffect(() => { load(); }, []);
-
-  const saveOrg = async () => {
-    setBusy(true); setErr(null);
-    try {
-      await supabase.from('organizations').insert({
-        name: orgForm.name.trim(), org_type: orgForm.type,
-        country: orgForm.country.trim() || null,
-        state: orgForm.state.trim() || null,
-        district: orgForm.district.trim() || null,
-        place: orgForm.place.trim() || null,
-        created_by: session!.user.id,
-      }).throwOnError();
-      setShowOrg(false); setOrgForm({ ...ORG_DEFAULT });
-      await load();
-    } catch (e) { setErr(friendlyError(e)); }
-    setBusy(false);
-  };
 
   const saveCommittee = async () => {
     setBusy(true); setErr(null);
@@ -126,7 +105,7 @@ export default function Setup() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold">⚙️ {t('setup.title')}</h1>
-        <button className="btn-primary text-sm" onClick={() => setShowOrg(true)}>
+        <button className="btn-primary text-sm" onClick={() => nav('/setup/new')}>
           ＋ {t('setup.newOrganization')}
         </button>
       </div>
@@ -191,57 +170,6 @@ export default function Setup() {
           ))}
         </div>
       ))}
-
-      {showOrg && (
-        <Modal title={t('setup.newOrganization')} onClose={() => setShowOrg(false)}>
-          <Field label={t('setup.orgName')}>
-            <input value={orgForm.name} autoFocus
-              onChange={(e) => setOrgForm({ ...orgForm, name: e.target.value })} />
-          </Field>
-          <Field label={t('setup.orgType')}>
-            <select value={orgForm.type} onChange={(e) => setOrgForm({ ...orgForm, type: e.target.value })}>
-              {ORG_TYPES.map((x) => (
-                <option key={x} value={x}>{t(`setup.${x === 'other' ? 'otherType' : x}`)}</option>
-              ))}
-            </select>
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label={t('setup.country')}>
-              <select value={orgForm.country}
-                onChange={(e) => {
-                  const country = e.target.value;
-                  const state = statesOf(country)[0] ?? '';
-                  setOrgForm({ ...orgForm, country, state, district: districtsOf(state)[0] ?? '' });
-                }}>
-                {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </Field>
-            <Field label={t('setup.state')}>
-              <select value={orgForm.state}
-                onChange={(e) => {
-                  const state = e.target.value;
-                  setOrgForm({ ...orgForm, state, district: districtsOf(state)[0] ?? '' });
-                }}>
-                {statesOf(orgForm.country).map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </Field>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label={t('setup.district')}>
-              <select value={orgForm.district}
-                onChange={(e) => setOrgForm({ ...orgForm, district: e.target.value })}>
-                {districtsOf(orgForm.state).map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
-            </Field>
-            <Field label={t('setup.place')}>
-              <input value={orgForm.place} onChange={(e) => setOrgForm({ ...orgForm, place: e.target.value })} />
-            </Field>
-          </div>
-          <button className="btn-primary w-full" disabled={busy || !orgForm.name.trim()} onClick={saveOrg}>
-            {t('common.save')}
-          </button>
-        </Modal>
-      )}
 
       {showCommittee && (
         <Modal title={t('setup.newCommittee')} onClose={() => setShowCommittee(null)}>

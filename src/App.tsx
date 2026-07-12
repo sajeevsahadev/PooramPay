@@ -17,6 +17,7 @@ import More from './pages/More';
 import Transactions from './pages/Transactions';
 import Reports from './pages/Reports';
 import Setup from './pages/Setup';
+import SetupWizard from './pages/SetupWizard';
 import Members from './pages/Members';
 import Areas from './pages/Areas';
 import Budget from './pages/Budget';
@@ -45,6 +46,7 @@ export default function App() {
   if (!hasAccess) {
     return (
       <Routes>
+        <Route path="/setup/new" element={<SetupWizard />} />
         <Route path="/setup" element={<div className="p-4 max-w-3xl mx-auto"><Setup /></div>} />
         <Route path="/privacy" element={<div className="p-4"><Privacy /></div>} />
         <Route path="*" element={<NoProgram />} />
@@ -54,6 +56,7 @@ export default function App() {
 
   return (
     <Routes>
+      <Route path="/setup/new" element={<SetupWizard />} />
       <Route element={<Shell />}>
         <Route index element={<Dashboard />} />
         <Route path="/collect" element={<Collect />} />

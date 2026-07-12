@@ -239,6 +239,25 @@ New UI should follow this direction. Logo = gradient coin + ₹ + gold spark
 
 > Append new decisions here (newest first). Keep entries one or two lines.
 
+- **2026-07-11** — Committee-scoped membership + positions + guided wizard
+  (migration 015). People are now managed at the **committee** level
+  (`committee_members`) with a **position** (extensible label: President/Secretary/
+  Treasurer/Committee Member/Volunteer as defaults, admins can add custom ones like
+  "Magazine Editor") that maps to an **access tier** (`admin`/`finance`/`own`/
+  `released`/`viewer`). Tiers drive the existing role+permissions; `committee_members`
+  is **projected** into `program_members` (skipping frozen programs) by triggers, so
+  all RLS/reports/finance stayed untouched. Access is committee-wide (a member reaches
+  every program under the committee, current & future — new programs inherit the team
+  via the extended `program_after_insert`). Existing per-program members were
+  auto-migrated up (highest role wins, never a demotion). `Setup.tsx` "New
+  Organization" now launches a full-screen guided wizard (`SetupWizard.tsx`,
+  `/setup/new`): Org → Committee → Members → Program → Done. `Members.tsx` is now the
+  committee "Team & Positions" screen. The `own` tier has a "see all committee
+  finances" toggle (= the 2nd-level full-or-own choice). "3rd-level sees finances only
+  when released" reuses the existing publish-results feature (014). Verified:
+  `scripts/e2e.mjs` 67/67 green, `scripts/test-projection.mjs` 9/9 green, tier→perms
+  mapping confirmed. NOTE: migration is already applied to the live DB; the frontend
+  must be deployed to complete the rollout.
 - **2026-07-11** — Two-tier financial visibility (migration 014): live totals
   gated behind `view_money` (finance roles only); viewer `view_money` now FALSE;
   committee admins digitally sign + publish final results, which all members then

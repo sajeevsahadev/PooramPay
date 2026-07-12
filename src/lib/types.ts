@@ -1,6 +1,35 @@
 export type Role = 'committee_admin' | 'treasurer' | 'collector' | 'member' | 'viewer';
 export type Perm = 'view_money' | 'collect' | 'expense' | 'approve' | 'coupons' | 'tasks';
 
+/** Access tier that a committee position maps to; drives role + permissions. */
+export type Tier = 'admin' | 'finance' | 'own' | 'released' | 'viewer';
+export const TIERS: Tier[] = ['admin', 'finance', 'own', 'released', 'viewer'];
+
+export interface CommitteePosition {
+  id: string;
+  committee_id: string;
+  label: string;
+  label_ml: string | null;
+  tier: Tier;
+  is_default: boolean;
+  sort_order: number;
+}
+
+export interface CommitteeMember {
+  id: string;
+  committee_id: string;
+  profile_id: string | null;
+  email: string;
+  display_name: string | null;
+  position_id: string | null;
+  position_label: string | null;
+  tier: Tier;
+  view_all_money: boolean;
+  role: Role;
+  permissions: Record<string, boolean>;
+  profiles?: { nickname: string | null; full_name: string | null } | null;
+}
+
 export interface Profile {
   id: string;
   email: string;
