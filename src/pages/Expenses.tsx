@@ -116,6 +116,7 @@ export default function Expenses() {
     { id: 'payables', label: t('expenses.payables'), count: payables.length, show: treasurerish },
     { id: 'advances', label: t('expenses.advances'), show: treasurerish },
   ];
+  const visibleTabs = tabs.filter((x) => x.show);
 
   const list = tab === 'mine' ? mine : tab === 'approvals' ? pending : tab === 'payables' ? payables : advances;
 
@@ -165,34 +166,40 @@ export default function Expenses() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
-        <h1 className="text-xl font-bold">🧾 {t('expenses.title')}</h1>
-        {!frozen && (
-          <div className="flex gap-2">
-            {can('expense') && (
-              <button className="btn-primary text-sm" onClick={() => setShowNew('claim')}>
-                ＋ {t('expenses.newClaim')}
-              </button>
-            )}
-            {treasurerish && (
-              <button className="btn-secondary text-sm" onClick={() => setShowNew('wallet')}>
-                ＋ {t('expenses.newExpense')}
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+      <h1 className="text-xl font-bold mb-3">🧾 {t('expenses.title')}</h1>
+      {!frozen && (can('expense') || treasurerish) && (
+        <div className="flex gap-2 mb-3">
+          {can('expense') && (
+            <button className="btn-primary text-sm flex-1" onClick={() => setShowNew('claim')}>
+              ＋ {t('expenses.newClaim')}
+            </button>
+          )}
+          {treasurerish && (
+            <button className="btn-secondary text-sm flex-1" onClick={() => setShowNew('wallet')}>
+              ＋ {t('expenses.newExpense')}
+            </button>
+          )}
+        </div>
+      )}
       <ErrorNote msg={err} />
 
-      <div className="flex gap-1 mb-3 overflow-x-auto">
-        {tabs.filter((x) => x.show).map((x) => (
-          <button key={x.id} onClick={() => setTab(x.id)}
-            className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${
-              tab === x.id ? 'bg-brand-700 text-white font-semibold' : 'bg-surface border border-stone-300'}`}>
-            {x.label}{x.count ? ` (${x.count})` : ''}
-          </button>
-        ))}
-      </div>
+      {visibleTabs.length > 1 && (
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          {visibleTabs.map((x) => (
+            <button key={x.id} onClick={() => setTab(x.id)}
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border ${
+                tab === x.id
+                  ? 'bg-brand-700 text-white border-brand-700'
+                  : 'bg-surface border-stone-300 text-stone-700'}`}>
+              {x.label}
+              {x.count ? (
+                <span className={`text-xs rounded-full px-1.5 py-0.5 leading-none ${
+                  tab === x.id ? 'bg-white/25' : 'bg-stone-200 text-stone-600'}`}>{x.count}</span>
+              ) : null}
+            </button>
+          ))}
+        </div>
+      )}
 
       {list.length === 0 && <Empty />}
       <div className="space-y-2">{list.map((r) => <ExpCard key={r.id} r={r} />)}</div>
