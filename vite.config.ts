@@ -11,6 +11,7 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['favicon.svg'],
       manifest: {
+        id: '/',
         name: 'PooramPay',
         short_name: 'PooramPay',
         description: 'Festival committee collections & expense management',
@@ -22,17 +23,24 @@ export default defineConfig({
         lang: 'en',
         categories: ['finance', 'productivity', 'business'],
         start_url: '/',
+        prefer_related_applications: false,
+        // PNG-only icon list for maximum store/packager compatibility
         icons: [
           { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
           { src: '/icon-maskable-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
           { src: '/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-          { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-          { src: '/icon-maskable.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
+        ],
+        screenshots: [
+          { src: '/screenshots/s1.png', sizes: '1080x1920', type: 'image/png', form_factor: 'narrow', label: 'PooramPay — festival committee finance' },
+          { src: '/screenshots/s2.png', sizes: '1080x1920', type: 'image/png', form_factor: 'narrow', label: 'Everything the committee needs' },
+          { src: '/screenshots/s3.png', sizes: '1920x1080', type: 'image/png', form_factor: 'wide', label: 'PooramPay on the web' },
         ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // store screenshots are only for the install UI — don't bloat the runtime cache
+        globIgnores: ['**/screenshots/**'],
         navigateFallbackDenylist: [/^\/auth/],
         // don't auto-activate; the in-app "Update now" prompt controls skipWaiting
         clientsClaim: true,
