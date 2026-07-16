@@ -17,6 +17,8 @@
 
   /* panels */
   --color-surface: #ffffff;
+  /* tinted app canvas so white cards float above it */
+  --color-app: #eef0fa;
 }
 
 @layer base {
@@ -25,7 +27,7 @@
   }
 
   body {
-    @apply bg-stone-100 text-stone-800 antialiased;
+    @apply bg-app text-stone-800 antialiased;
     font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Malayalam', sans-serif;
   }
 
@@ -50,7 +52,31 @@
   .btn-secondary { @apply bg-white border border-stone-300 text-stone-700 hover:bg-stone-50; }
   .btn-danger { @apply bg-red-600 text-white hover:bg-red-700 shadow-sm; }
 
-  .card { @apply bg-white rounded-xl border border-stone-200 p-4 shadow-sm; }
+  .card { @apply bg-white rounded-2xl border border-stone-100 p-4 shadow-sm; }
+
+  /* section heading above a group of cards */
+  .section-title { @apply text-base font-bold text-stone-800 mb-2 px-0.5; }
+
+  /* hero balance card */
+  .hero {
+    @apply rounded-2xl p-4 text-white shadow-sm;
+    background: linear-gradient(135deg, #4f46e5 0%, #3730a3 60%, #312e81 100%);
+  }
+  .hero-label { @apply text-[11px] uppercase tracking-wide text-white/70; }
+
+  /* quick-action chip: circular tinted icon + label underneath */
+  .qa { @apply flex flex-col items-center gap-1.5 text-center min-h-0; }
+  .qa-icon {
+    @apply w-14 h-14 min-h-0 rounded-full bg-brand-50 border border-brand-100
+      flex items-center justify-center text-2xl transition-transform active:scale-95;
+  }
+  .qa-label { @apply text-[11px] leading-tight text-stone-600 font-medium; }
+
+  /* tappable list row inside a card group */
+  .rowcard {
+    @apply flex items-center gap-3 px-4 py-3 border-b border-stone-50 last:border-0
+      hover:bg-brand-50/60 transition-colors;
+  }
 
   .chip, .chip-green, .chip-amber, .chip-red, .chip-gray, .chip-blue {
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
@@ -64,7 +90,7 @@
   .money { font-variant-numeric: tabular-nums; }
 
   /* dashboard stat cards: white with a colored accent bar and colored value */
-  .stat { @apply bg-white rounded-xl border border-stone-200 p-4 shadow-sm relative overflow-hidden; }
+  .stat { @apply bg-white rounded-2xl border border-stone-100 p-4 shadow-sm relative overflow-hidden; }
   .stat::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
   .stat .stat-label { @apply text-xs uppercase tracking-wide text-stone-500; }
   .stat-fuchsia::before { background: #4338ca; }

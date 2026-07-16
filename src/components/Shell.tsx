@@ -67,9 +67,9 @@ export default function Shell() {
 
       <div className="flex-1 flex flex-col min-h-screen pb-16 md:pb-0">
         {/* Header */}
-        <header className="sticky top-0 z-40 bg-white border-b border-stone-200">
+        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-stone-100">
           <div className="flex items-center gap-2 px-4 py-2.5">
-            <img src="/favicon.svg" alt="" className="w-7 h-7 md:hidden" />
+            <img src="/favicon.svg" alt="" className="w-8 h-8 rounded-lg md:hidden" />
             <select
               value={currentProgramId ?? ''}
               onChange={(e) => { setCurrentProgramId(e.target.value); nav('/'); }}
@@ -87,12 +87,12 @@ export default function Shell() {
                     <option key={p.id} value={p.id}>{p.name} {p.year}</option>
                   ))}
             </select>
-            <span className="text-xs text-stone-500 shrink-0">
+            <span className={`shrink-0 ${isPadmin ? 'chip-blue' : 'chip-gray'}`}>
               {isPadmin ? '🛡️ Admin' : current ? t(`roles.${current.role}`) : ''}
             </span>
           </div>
           {frozen && (
-            <div className="bg-stone-100 text-stone-600 text-xs px-4 py-1.5 border-t border-stone-200">
+            <div className="bg-stone-100 text-stone-600 text-xs px-4 py-1.5 border-t border-stone-100">
               ❄️ {t('dashboard.frozen')}
             </div>
           )}
@@ -103,19 +103,15 @@ export default function Shell() {
         </main>
 
         {/* Mobile bottom nav */}
-        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 flex bg-white border-t border-stone-200">
+        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 flex bg-white border-t border-stone-100
+          pb-[env(safe-area-inset-bottom)]">
           {tabs.map((x) => (
             <NavLink key={x.to} to={x.to} end={x.to === '/'}
               className={({ isActive }) =>
-                `flex-1 flex flex-col items-center py-1.5 text-[11px] ${
+                `flex-1 flex flex-col items-center gap-0.5 py-2 text-[11px] transition-colors ${
                   isActive ? 'text-brand-700 font-bold' : 'text-stone-500'}`}>
-              {({ isActive }) => (
-                <>
-                  <span className="text-xl leading-6">{tabIcons[x.key]}</span>
-                  {t(`nav.${x.key}`)}
-                  <span className={`h-0.5 w-6 rounded-full mt-0.5 ${isActive ? 'bg-brand-700' : 'bg-transparent'}`} />
-                </>
-              )}
+              <span className="text-xl leading-6">{tabIcons[x.key]}</span>
+              {t(`nav.${x.key}`)}
             </NavLink>
           ))}
         </nav>

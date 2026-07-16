@@ -13,8 +13,8 @@ interface TxRow {
 
 export default function Dashboard() {
   const { t, i18n } = useTranslation();
-  const { profile, memberships, finance, current, currentProgramId, setCurrentProgramId,
-    can, refreshFinance, session, frozen } = useApp();
+  const { profile, memberships, finance, current, currentProgram, currentProgramId, setCurrentProgramId,
+    can, refreshFinance, session, frozen, isCommitteeAdmin } = useApp();
   const { unit } = useUnits();
   const [recent, setRecent] = useState<TxRow[]>([]);
   const [myCash, setMyCash] = useState(0);
@@ -133,88 +133,131 @@ export default function Dashboard() {
 
   const showMoney = can('view_money');
   const spark14 = dailyIncome.reduce((a, b) => a + b, 0);
+  const pendingApprovals = can('approve') ? (finance?.pending_claims ?? 0) : 0;
 
   const hour = new Date().getHours();
   const greetKey = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
   const myName = profile?.nickname || profile?.full_name || '';
 
+  // quick actions — circular chips, gated by what this member may actually do
+  const quickActions = [
+    { to: '/collect', icon: '💰', label: t('nav.collect'), show: can('collect') && !frozen },
+    { to: '/coupons', icon: '🎟️', label: t('nav.coupons'), show: can('coupons') },
+    { to: '/expenses', icon: '🧾', label: t('nav.expenses'), show: can('expense') || can('approve') },
+    { to: '/reports', icon: '📊', label: t('nav.reports'), show: true },
+    { to: '/tasks', icon: '✅', label: t('nav.tasks'), show: true },
+    { to: '/areas', icon: '🏘️', label: t('setup.areas'), show: can('collect') || isCommitteeAdmin },
+    { to: '/transactions', icon: '📒', label: t('nav.transactions'), show: showMoney },
+    { to: '/more', icon: '☰', label: t('nav.more'), show: true },
+  ].filter((x) => x.show);
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* personalized greeting */}
       <div>
         <h1 className="text-xl font-black">
           {greetKey === 'morning' ? '☀️' : greetKey === 'afternoon' ? '🌤️' : '🌙'}{' '}
           {t('home.' + greetKey)}{myName ? `, ${myName}` : ''}
         </h1>
-        {memberships.length > 0 && (
-          <p className="text-sm text-stone-500">
-            {t('home.myGroups')}: {memberships.length}
-          </p>
-        )}
+        <p className="text-sm text-stone-500 truncate">
+          {currentProgram?.committees?.organizations?.name
+            ? `${currentProgram.name} · ${currentProgram.committees.organizations.name}`
+            : `${t('home.myGroups')}: ${memberships.length}`}
+        </p>
       </div>
 
-      {msg && <div className="bg-brand-100 text-stone-800 rounded-lg p-3 text-sm" onClick={() => setMsg(null)}>{msg}</div>}
+      {msg && <div className="bg-brand-100 text-stone-800 rounded-xl p-3 text-sm" onClick={() => setMsg(null)}>{msg}</div>}
+
+      {/* hero balance card */}
+      {showMoney && (
+        <div className="hero">
+          <div className="flex justify-between items-start gap-3">
+            <div className="min-w-0">
+              <div className="hero-label">{t('dashboard.cashInHand')}</div>
+              <div className="text-3xl font-black money mt-0.5">{fmtINR(finance?.cash_balance)}</div>
+            </div>
+            <div className="text-right min-w-0">
+              <div className="hero-label">{t('dashboard.bankBalance')}</div>
+              <div className="text-xl font-bold money mt-0.5">{fmtINR(finance?.bank_balance)}</div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-white/15">
+            <div>
+              <div className="hero-label">{t('dashboard.collected')}</div>
+              <div className="text-lg font-bold money text-green-300">{fmtINR(finance?.income_total)}</div>
+            </div>
+            <div>
+              <div className="hero-label">{t('dashboard.spent')}</div>
+              <div className="text-lg font-bold money text-rose-200">{fmtINR(finance?.expense_total)}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!showMoney && (
+        <div className="hero">
+          <div className="hero-label">🙌 {t('home.myCollected')}</div>
+          <div className="text-3xl font-black money mt-0.5">{fmtINR(myCollected)}</div>
+        </div>
+      )}
+
+      {/* quick actions */}
+      <div>
+        <div className="section-title">{t('home.quickActions')}</div>
+        <div className="card">
+          <div className="grid grid-cols-4 gap-y-4">
+            {quickActions.map((q) => (
+              <Link key={q.to} to={q.to} className="qa">
+                <span className="qa-icon">{q.icon}</span>
+                <span className="qa-label">{q.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* my committees — quick switch */}
       {memberships.length > 1 && (
-        <div className="card p-0 overflow-hidden">
-          <div className="px-4 py-2.5 font-bold border-b border-stone-100 text-sm">🏛 {t('home.myGroups')}</div>
-          {memberships.map((m) => (
-            <button key={m.program_id}
-              onClick={() => setCurrentProgramId(m.program_id)}
-              className={`w-full flex items-center justify-between px-4 py-2.5 border-b border-stone-50 last:border-0 text-left text-sm hover:bg-brand-50 ${
-                m.program_id === currentProgramId ? 'bg-brand-50' : ''}`}>
-              <span className="min-w-0">
-                <span className="font-medium truncate block">
-                  {m.programs?.committees?.organizations?.name} · {m.programs?.name} {m.programs?.year}
+        <div>
+          <div className="section-title">{t('home.myGroups')}</div>
+          <div className="card p-0 overflow-hidden">
+            {memberships.map((m) => (
+              <button key={m.program_id}
+                onClick={() => setCurrentProgramId(m.program_id)}
+                className={`rowcard w-full text-left ${m.program_id === currentProgramId ? 'bg-brand-50/60' : ''}`}>
+                <span className="tile tile-violet">🏛</span>
+                <span className="flex-1 min-w-0">
+                  <span className="font-medium text-sm truncate block">
+                    {m.programs?.name} {m.programs?.year}
+                  </span>
+                  <span className="text-xs text-stone-500 truncate block">
+                    {m.programs?.committees?.organizations?.name} · {t(`roles.${m.role}`)}
+                  </span>
                 </span>
-                <span className="text-xs text-stone-500">{t(`roles.${m.role}`)}</span>
-              </span>
-              {m.program_id === currentProgramId
-                ? <span className="chip-blue">✓</span>
-                : <span className="text-stone-300">›</span>}
-            </button>
-          ))}
+                {m.program_id === currentProgramId
+                  ? <span className="chip-blue">✓</span>
+                  : <span className="text-stone-300">›</span>}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
       {/* tasks assigned to me */}
       {myTaskList.length > 0 && (
-        <div className="card p-0 overflow-hidden">
-          <div className="px-4 py-2.5 font-bold border-b border-stone-100 flex justify-between text-sm">
-            <span>📋 {t('home.myTasksTitle')}</span>
-            <Link to="/tasks" className="text-brand-600 font-semibold">{t('home.viewAll')} ›</Link>
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="section-title mb-0">📋 {t('home.myTasksTitle')}</div>
+            <Link to="/tasks" className="text-brand-600 text-sm font-semibold">{t('home.viewAll')} ›</Link>
           </div>
-          {myTaskList.slice(0, 5).map((tk) => (
-            <Link key={tk.id} to="/tasks"
-              className="flex items-center justify-between px-4 py-2.5 border-b border-stone-50 last:border-0 text-sm hover:bg-brand-50">
-              <span className="min-w-0 flex items-center gap-2">
+          <div className="card p-0 overflow-hidden">
+            {myTaskList.slice(0, 5).map((tk) => (
+              <Link key={tk.id} to="/tasks" className="rowcard text-sm">
                 <span className={`w-2 h-2 rounded-full shrink-0 ${tk.status === 'in_progress' ? 'bg-blue-500' : 'bg-amber-500'}`} />
-                <span className="truncate">{tk.title}</span>
-              </span>
-              {tk.due_date && <span className="text-xs text-stone-500 shrink-0">{t('home.due')} {fmtDate(tk.due_date, i18n.language)}</span>}
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {showMoney && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="stat stat-fuchsia">
-            <div className="stat-label">💵 {t('dashboard.cashInHand')}</div>
-            <div className="stat-value text-2xl font-black money">{fmtINR(finance?.cash_balance)}</div>
-          </div>
-          <div className="stat stat-cyan">
-            <div className="stat-label">🏦 {t('dashboard.bankBalance')}</div>
-            <div className="stat-value text-2xl font-black money">{fmtINR(finance?.bank_balance)}</div>
-          </div>
-          <div className="stat stat-green">
-            <div className="stat-label">📈 {t('dashboard.collected')}</div>
-            <div className="stat-value text-xl font-black money">{fmtINR(finance?.income_total)}</div>
-          </div>
-          <div className="stat stat-red">
-            <div className="stat-label">📉 {t('dashboard.spent')}</div>
-            <div className="stat-value text-xl font-black money">{fmtINR(finance?.expense_total)}</div>
+                <span className="flex-1 truncate">{tk.title}</span>
+                {tk.due_date && <span className="text-xs text-stone-500 shrink-0">{t('home.due')} {fmtDate(tk.due_date, i18n.language)}</span>}
+              </Link>
+            ))}
           </div>
         </div>
       )}
@@ -246,27 +289,35 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Alerts */}
-      <div className="space-y-2">
-        {can('approve') && (finance?.pending_claims ?? 0) > 0 && (
-          <Link to="/expenses" className="card flex items-center gap-3 hover:bg-stone-100">
-            <span className="tile tile-amber">⏳</span>
-            <span className="flex-1">{finance!.pending_claims} {t('dashboard.pendingApprovals')}</span><span className="text-stone-400">›</span>
-          </Link>
-        )}
-        {can('coupons') && couponOut > 0 && (
-          <Link to="/coupons" className="card flex items-center gap-3 hover:bg-stone-100">
-            <span className="tile tile-fuchsia">🎟️</span>
-            <span className="flex-1">{t('dashboard.couponPending')}: <b className="money">{fmtINR(couponOut)}</b></span><span className="text-stone-400">›</span>
-          </Link>
-        )}
-        {myTasks > 0 && (
-          <Link to="/tasks" className="card flex items-center gap-3 hover:bg-stone-100">
-            <span className="tile tile-cyan">📋</span>
-            <span className="flex-1">{t('dashboard.myTasks')}: <b>{myTasks}</b></span><span className="text-stone-400">›</span>
-          </Link>
-        )}
-      </div>
+      {/* Needs attention */}
+      {(pendingApprovals > 0 || (can('coupons') && couponOut > 0) || myTasks > 0) && (
+        <div>
+          <div className="section-title">{t('home.needsAttention')}</div>
+          <div className="card p-0 overflow-hidden">
+            {pendingApprovals > 0 && (
+              <Link to="/expenses" className="rowcard">
+                <span className="tile tile-amber">⏳</span>
+                <span className="flex-1 text-sm">{pendingApprovals} {t('dashboard.pendingApprovals')}</span>
+                <span className="text-stone-300">›</span>
+              </Link>
+            )}
+            {can('coupons') && couponOut > 0 && (
+              <Link to="/coupons" className="rowcard">
+                <span className="tile tile-fuchsia">🎟️</span>
+                <span className="flex-1 text-sm">{t('dashboard.couponPending')}: <b className="money">{fmtINR(couponOut)}</b></span>
+                <span className="text-stone-300">›</span>
+              </Link>
+            )}
+            {myTasks > 0 && (
+              <Link to="/tasks" className="rowcard">
+                <span className="tile tile-cyan">📋</span>
+                <span className="flex-1 text-sm">{t('dashboard.myTasks')}: <b>{myTasks}</b></span>
+                <span className="text-stone-300">›</span>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* My cash in hand */}
       {myCash > 0 && !frozen && (
@@ -295,28 +346,23 @@ export default function Dashboard() {
 
       {/* Recent transactions */}
       {showMoney && (
-        <div className="card p-0 overflow-hidden">
-          <div className="px-4 py-3 font-bold border-b border-stone-100 flex justify-between">
-            {t('dashboard.recent')}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="section-title mb-0">{t('dashboard.recent')}</div>
             <Link to="/transactions" className="text-brand-600 text-sm font-semibold">{t('common.view')} ›</Link>
           </div>
-          {recent.length === 0 && <div className="p-4 text-stone-400 text-sm">{t('common.none')}</div>}
-          {recent.map((r) => (
-            <div key={r.kind + r.id} className="px-4 py-2.5 flex justify-between border-b border-stone-50 last:border-0 text-sm">
-              <span className="truncate mr-2">{r.label}</span>
-              <span className={`money font-semibold shrink-0 ${r.kind === 'in' ? 'text-green-700' : 'text-red-700'}`}>
-                {r.kind === 'in' ? '+' : '−'} {fmtINR(r.amount)}
-                <span className="text-stone-400 font-normal ml-2">{fmtDate(r.date, i18n.language)}</span>
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {!showMoney && (
-        <div className="stat stat-green">
-          <div className="stat-label">🙌 {t('home.myCollected')}</div>
-          <div className="stat-value text-2xl font-black money">{fmtINR(myCollected)}</div>
+          <div className="card p-0 overflow-hidden">
+            {recent.length === 0 && <div className="p-4 text-stone-400 text-sm">{t('common.none')}</div>}
+            {recent.map((r) => (
+              <div key={r.kind + r.id} className="px-4 py-3 flex justify-between border-b border-stone-50 last:border-0 text-sm">
+                <span className="truncate mr-2">{r.label}</span>
+                <span className={`money font-semibold shrink-0 ${r.kind === 'in' ? 'text-green-700' : 'text-red-700'}`}>
+                  {r.kind === 'in' ? '+' : '−'} {fmtINR(r.amount)}
+                  <span className="text-stone-400 font-normal ml-2">{fmtDate(r.date, i18n.language)}</span>
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

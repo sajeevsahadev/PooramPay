@@ -183,7 +183,9 @@
     "noTasks": "No tasks assigned to you",
     "due": "Due",
     "viewAll": "View all",
-    "myCollected": "Collected by me"
+    "myCollected": "Collected by me",
+    "quickActions": "Quick actions",
+    "needsAttention": "Needs attention"
   },
   "dashboard": {
     "cashInHand": "Cash in Hand",
