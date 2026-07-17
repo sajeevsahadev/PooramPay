@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { setLanguage } from '../i18n';
+import Tour from '../components/Tour';
 
 export default function Login() {
   const { t, i18n } = useTranslation();
+  const [showTour, setShowTour] = useState(false);
 
   const signIn = () =>
     supabase.auth.signInWithOAuth({
@@ -30,7 +33,12 @@ export default function Login() {
           {t('auth.signInWithGoogle')}
         </button>
 
-        <div className="mt-8 flex gap-2">
+        <button onClick={() => setShowTour(true)}
+          className="mt-4 text-sm font-semibold text-brand-600 hover:text-brand-800">
+          ❓ {t('tour.title')}
+        </button>
+
+        <div className="mt-6 flex gap-2">
           {[
             { code: 'en', label: 'English' },
             { code: 'ml', label: 'മലയാളം' },
@@ -46,6 +54,7 @@ export default function Login() {
         </div>
         <Link to="/privacy" className="mt-6 text-xs text-stone-400 underline">{t('privacy.title')}</Link>
       </div>
+      {showTour && <Tour onClose={() => setShowTour(false)} />}
     </div>
   );
 }

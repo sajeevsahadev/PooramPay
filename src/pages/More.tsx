@@ -1,12 +1,15 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { setLanguage } from '../i18n';
+import Tour from '../components/Tour';
 
 export default function More() {
   const { t, i18n } = useTranslation();
   const { profile, can, isCommitteeAdmin, isPadmin } = useApp();
+  const [showTour, setShowTour] = useState(false);
 
   const links = [
     { to: '/transactions', icon: '📒', tile: 'tile-cyan', label: t('nav.transactions'), show: can('view_money') },
@@ -50,6 +53,13 @@ export default function More() {
         ))}
       </div>
 
+      <button onClick={() => setShowTour(true)}
+        className="card mb-4 w-full flex items-center gap-3 hover:bg-brand-50 text-left">
+        <span className="tile tile-fuchsia w-9 h-9 text-lg">❓</span>
+        <span className="flex-1 font-medium">{t('tour.title')}</span>
+        <span className="text-stone-300">›</span>
+      </button>
+
       <div className="card mb-4">
         <div className="text-sm font-semibold text-stone-600 mb-2">{t('common.language')}</div>
         <div className="flex gap-2">
@@ -69,6 +79,7 @@ export default function More() {
       <div className="text-center mt-4">
         <Link to="/privacy" className="text-xs text-stone-500 underline">{t('privacy.title')}</Link>
       </div>
+      {showTour && <Tour onClose={() => setShowTour(false)} />}
     </div>
   );
 }

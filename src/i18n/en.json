@@ -147,6 +147,64 @@
     "noCommittee": "Select a committee program first to manage its team.",
     "scopeNote": "People added here can access every program under this committee."
   },
+  "tour": {
+    "title": "How this works",
+    "next": "Next",
+    "back": "Back",
+    "done": "Done",
+    "skip": "Skip",
+    "stepOf": "{{n}} / {{total}}",
+    "s1": {
+      "title": "Welcome to PooramPay!",
+      "body": "One app to run your committee's collections, expenses and accounts with full transparency — for temples, churches, mosques, clubs, colleges and associations.",
+      "tip": "Two minutes is all this tour takes"
+    },
+    "s2": {
+      "title": "1 · Create your organization",
+      "body": "Start by creating your organization — its name, type and place. A guided setup walks you through everything step by step.",
+      "tip": "Setup → New Organization"
+    },
+    "s3": {
+      "title": "2 · Add the committee",
+      "body": "Under the organization comes the committee — the team that runs everything. For example \"Club Management 2026\". You are added as President automatically.",
+      "tip": "One organization can have many committees"
+    },
+    "s4": {
+      "title": "3 · Members & privileges",
+      "body": "Add members with positions. President, Secretary and Treasurer see everything. Others can be limited — see only what they collected, or see accounts only after the committee publishes the results. You decide who sees the money.",
+      "tip": "Custom positions like \"Magazine Editor\" can be added too"
+    },
+    "s5": {
+      "title": "4 · Start a program",
+      "body": "A program is one year's activity — like \"Onam 2026\". Set the year, opening balance and who you collect from (houses, members, shops…). Next year, copy the whole register forward in one tap.",
+      "tip": "Members added to the committee get access to all its programs"
+    },
+    "s6": {
+      "title": "5 · Collect money",
+      "body": "Record house-to-house collections, coupon books, weekly subscriptions and donations. Every entry gets an automatic receipt number — nothing goes unaccounted.",
+      "tip": "Areas & register make door-to-door collection easy"
+    },
+    "s7": {
+      "title": "6 · Spend with approval",
+      "body": "Submit expenses with a photo of the bill. The treasurer approves, then it is paid and recorded. Not a rupee moves without approval.",
+      "tip": "Rejections always carry a reason"
+    },
+    "s8": {
+      "title": "7 · Hand over cash",
+      "body": "Collectors always see the cash in their hand and hand it over to the treasurer inside the app — both sides confirm, so there is no confusion later.",
+      "tip": "UPI and bank entries are tracked automatically"
+    },
+    "s9": {
+      "title": "8 · Transparent accounts",
+      "body": "Cash book, budget vs actual and profit & loss — any time. At the end, the committee signs and publishes the final accounts for every member to see. Every change is logged; nothing can be erased.",
+      "tip": "Finished programs can be frozen — read-only forever"
+    },
+    "s10": {
+      "title": "You're ready!",
+      "body": "Create your organization, add your team, and run this year's program with complete transparency. Install PooramPay on your phone for one-tap access.",
+      "tip": "Works in English and Malayalam"
+    }
+  },
   "wizard": {
     "newOrgTitle": "Create a new organization",
     "step": "Step {{n}} of {{total}}",
