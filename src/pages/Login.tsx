@@ -18,7 +18,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-brand-50 to-stone-100">
       <div className="card w-full max-w-sm flex flex-col items-center py-10 px-8">
-        <img src="/icon.svg" alt="" className="w-20 h-20 rounded-2xl shadow-sm mb-5" />
+        <img src="/icon.svg?v=2" alt="" className="w-20 h-20 rounded-2xl shadow-sm mb-5" />
         <h1 className="text-3xl font-black mb-2 text-brand-800">{t('app.name')}</h1>
         <p className="text-stone-500 text-center text-sm mb-8">{t('app.tagline')}</p>
 

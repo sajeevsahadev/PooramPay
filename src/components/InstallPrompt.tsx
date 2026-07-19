@@ -56,7 +56,7 @@ export default function InstallPrompt() {
   return (
     <div className="fixed inset-x-0 bottom-16 md:bottom-4 z-[55] flex justify-center px-3 pointer-events-none">
       <div className="pointer-events-auto w-full max-w-md card flex items-center gap-3 shadow-xl border-brand-200">
-        <img src="/icon.svg" alt="" className="w-10 h-10 rounded-lg shrink-0" />
+        <img src="/icon.svg?v=2" alt="" className="w-10 h-10 rounded-lg shrink-0" />
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-sm">{t('install.title')}</div>
           <div className="text-xs text-stone-500">{ios ? t('install.iosHelp') : t('install.body')}</div>

@@ -60,7 +60,7 @@ export default function Shell() {
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:flex-col w-60 shrink-0 min-h-screen sticky top-0 bg-white border-r border-stone-200">
         <div className="p-4 font-black text-xl tracking-tight flex items-center gap-2 text-brand-800">
-          <img src="/favicon.svg" alt="" className="w-9 h-9" />
+          <img src="/favicon.svg?v=2" alt="" className="w-9 h-9" />
           {t('app.name')}
         </div>
         <nav className="flex-1 px-2 space-y-0.5">
@@ -96,7 +96,7 @@ export default function Shell() {
                 <line x1="4" y1="18" x2="20" y2="18" />
               </svg>
             </button>
-            <img src="/favicon.svg" alt="" className="w-8 h-8 rounded-lg md:hidden" />
+            <img src="/favicon.svg?v=2" alt="" className="w-8 h-8 rounded-lg md:hidden" />
             <select
               value={currentProgramId ?? ''}
               onChange={(e) => { setCurrentProgramId(e.target.value); nav('/'); }}
@@ -151,7 +151,7 @@ export default function Shell() {
           <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] bg-white shadow-2xl flex flex-col
             animate-[drawerIn_0.2s_ease]" onClick={(e) => e.stopPropagation()}>
             <div className="p-4 flex items-center gap-2 border-b border-stone-100">
-              <img src="/favicon.svg" alt="" className="w-9 h-9 rounded-lg" />
+              <img src="/favicon.svg?v=2" alt="" className="w-9 h-9 rounded-lg" />
               <span className="font-black text-lg text-brand-800">{t('app.name')}</span>
               <button className="ml-auto text-stone-400 px-1 min-h-0" onClick={() => setMenuOpen(false)}>✕</button>
             </div>
