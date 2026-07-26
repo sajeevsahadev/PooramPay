@@ -74,7 +74,7 @@
     "title": "Privacy & Data",
     "updated": "Last updated",
     "collectTitle": "What we collect",
-    "collectBody": "Your name, email (from Google sign-in), and phone number; the financial records your committee enters (collections, expenses, coupons); and register details you add (household/member names, contacts, and optional GPS locations you pin).",
+    "collectBody": "Your name, email (from Google sign-in), and phone number; the financial records your committee enters (collections, expenses, coupons); and register details you add (household/member names, contacts, and optional GPS locations you pin). When you sign in, we also record your device type, IP address and approximate location (city/region/country) as a security and audit log, visible only to platform administrators.",
     "useTitle": "How we use it",
     "useBody": "Only to run your committee's collections and accounts inside this app — showing balances, reports, and who collected or approved what. We do not use your data for advertising and we do not sell it.",
     "locationTitle": "Location",

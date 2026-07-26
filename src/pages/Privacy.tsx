@@ -26,7 +26,7 @@ export default function Privacy() {
       </div>
 
       <div className="card space-y-4 text-sm leading-relaxed text-stone-700">
-        <p className="text-stone-500">{t('privacy.updated')}: 2026-07-09</p>
+        <p className="text-stone-500">{t('privacy.updated')}: 2026-07-26</p>
 
         <section>
           <h2 className="font-bold text-stone-800 mb-1">{t('privacy.collectTitle')}</h2>
