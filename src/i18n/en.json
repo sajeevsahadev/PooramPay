@@ -147,6 +147,13 @@
     "noCommittee": "Select a committee program first to manage its team.",
     "scopeNote": "People added here can access every program under this committee."
   },
+  "sort": {
+    "name": "Name (A–Z)",
+    "nameDesc": "Name (Z–A)",
+    "unpaid": "Not paid first",
+    "sub": "Weekly first",
+    "recent": "Recently added"
+  },
   "tour": {
     "title": "How this works",
     "next": "Next",
@@ -458,6 +465,7 @@
     "area": "Area",
     "areas": "Areas",
     "newArea": "New Area",
+    "openArea": "Open",
     "houses": "Houses",
     "newHouse": "Add House",
     "houseOwner": "Person name",

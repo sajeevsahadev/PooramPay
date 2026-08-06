@@ -20,6 +20,7 @@ import Setup from './pages/Setup';
 import SetupWizard from './pages/SetupWizard';
 import Members from './pages/Members';
 import Areas from './pages/Areas';
+import AreaDetail from './pages/AreaDetail';
 import Budget from './pages/Budget';
 import AuditLog from './pages/AuditLog';
 import DeletedTx from './pages/DeletedTx';
@@ -72,6 +73,7 @@ export default function App() {
         <Route path="/setup" element={<Setup />} />
         <Route path="/members" element={<Members />} />
         <Route path="/areas" element={<Areas />} />
+        <Route path="/areas/:id" element={<AreaDetail />} />
         <Route path="/budget" element={<Budget />} />
         <Route path="/audit" element={<AuditLog />} />
         <Route path="/deleted" element={<DeletedTx />} />

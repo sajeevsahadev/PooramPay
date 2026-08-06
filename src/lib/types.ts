@@ -142,6 +142,8 @@ export interface House {
   gps_lat: number | null;
   gps_lng: number | null;
   in_subscription: boolean;
+  sort_order?: number;
+  created_at?: string;
 }
 
 export interface IncomeEntry {

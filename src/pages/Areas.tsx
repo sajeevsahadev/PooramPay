@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { useUnits } from '../lib/units';
 import { Field, ErrorNote, friendlyError, Modal, Empty } from '../components/ui';
-import GpsPin from '../components/GpsPin';
+import HouseRow from '../components/HouseRow';
+import HouseModal from '../components/HouseModal';
 import { displayName, type Area, type House, type Membership } from '../lib/types';
 
 function getPosition(): Promise<{ lat: number; lng: number }> {
@@ -18,43 +20,11 @@ function getPosition(): Promise<{ lat: number; lng: number }> {
   });
 }
 
-const EMPTY_FORM = {
-  name: '', owner: '', phone: '', email: '', areaId: '', sub: false,
-  lat: null as number | null, lng: null as number | null,
-};
 const PAGE = 60;
-
-// Module-scoped: a scannable one-line row for a register entry.
-function HouseRow({
-  h, areaName, paid, onClick,
-}: { h: House; areaName?: string; paid: boolean; onClick: () => void }) {
-  return (
-    <button onClick={onClick}
-      className="w-full flex items-center justify-between gap-2 py-2 px-1 border-b border-stone-100 last:border-0 text-left hover:bg-stone-50">
-      <div className="min-w-0 flex items-center gap-2">
-        <span className={`w-2 h-2 rounded-full shrink-0 ${paid ? 'bg-green-500' : 'bg-stone-300'}`}
-          title={paid ? 'paid' : 'not paid'} />
-        <div className="min-w-0">
-          <div className="text-sm font-medium truncate">{h.name}</div>
-          {(h.owner_name || h.phone) && (
-            <div className="text-xs text-stone-500 truncate">
-              {h.owner_name}{h.owner_name && h.phone ? ' · ' : ''}{h.phone}
-              {areaName ? ` · ${areaName}` : ''}
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center gap-1.5 shrink-0 text-stone-400 text-sm">
-        {h.gps_lat != null && <span title="location pinned">📍</span>}
-        {h.in_subscription && <span title="weekly">📅</span>}
-        <span>›</span>
-      </div>
-    </button>
-  );
-}
 
 export default function Areas() {
   const { t } = useTranslation();
+  const nav = useNavigate();
   const { currentProgramId, currentProgram, isCommitteeAdmin, frozen, can } = useApp();
   const { unit, units } = useUnits();
   const weekly = !!currentProgram?.weekly_amount;
@@ -86,10 +56,8 @@ export default function Areas() {
   const [bulk, setBulk] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
 
-  // single entry add / edit
-  const [entry, setEntry] = useState<{ mode: 'add' | 'edit'; house?: House } | null>(null);
-  const [form, setForm] = useState({ ...EMPTY_FORM });
-  const [busy, setBusy] = useState(false);
+  // single entry add / edit (rendered via the shared HouseModal)
+  const [entry, setEntry] = useState<{ mode: 'add' | 'edit'; house?: House; defaultAreaId?: string } | null>(null);
 
   const load = async () => {
     if (!currentProgramId) return;
@@ -192,45 +160,8 @@ export default function Areas() {
   };
 
   // ---- single entry add / edit ----
-  const openAdd = (areaId: string) => { setForm({ ...EMPTY_FORM, areaId }); setEntry({ mode: 'add' }); };
-  const openEdit = (h: House) => {
-    setForm({
-      name: h.name, owner: h.owner_name ?? '', phone: h.phone ?? '', email: h.email ?? '',
-      areaId: h.area_id ?? '', sub: h.in_subscription, lat: h.gps_lat, lng: h.gps_lng,
-    });
-    setEntry({ mode: 'edit', house: h });
-  };
-
-  const saveEntry = async () => {
-    if (!form.name.trim() || busy) return;
-    setBusy(true); setErr(null);
-    const payload = {
-      name: form.name.trim(), owner_name: form.owner.trim() || null,
-      phone: form.phone.trim() || null, email: form.email.trim() || null,
-      area_id: form.areaId || null, in_subscription: form.sub,
-      gps_lat: form.lat, gps_lng: form.lng,
-    };
-    try {
-      if (entry?.mode === 'edit' && entry.house) {
-        await supabase.from('houses').update(payload).eq('id', entry.house.id).throwOnError();
-      } else {
-        await supabase.from('houses').insert({ program_id: currentProgramId, ...payload }).throwOnError();
-      }
-      setEntry(null);
-      await load();
-    } catch (e) { setErr(friendlyError(e)); }
-    setBusy(false);
-  };
-
-  const removeEntry = async () => {
-    if (entry?.mode !== 'edit' || !entry.house) return;
-    if (!window.confirm(`${t('common.delete')}: ${entry.house.name}?`)) return;
-    try {
-      await supabase.from('houses').delete().eq('id', entry.house.id).throwOnError();
-      setEntry(null);
-      await load();
-    } catch (e) { setErr(friendlyError(e)); }
-  };
+  const openAdd = (areaId: string) => setEntry({ mode: 'add', defaultAreaId: areaId });
+  const openEdit = (h: House) => setEntry({ mode: 'edit', house: h });
 
   const toggleTeam = async (area: Area, memberId: string) => {
     const ids = area.assigned_member_ids.includes(memberId)
@@ -270,20 +201,25 @@ export default function Areas() {
                 </span>
               </span>
             </button>
-            {isCommitteeAdmin && !frozen && (
-              <div className="flex flex-wrap gap-1.5 justify-end">
-                {can('collect') && a.is_active && (
-                  <button className="btn-primary text-xs px-2.5 py-1.5" onClick={() => openAdd(a.id)}>＋ {unit}</button>
-                )}
-                <button className="btn-secondary text-xs px-2.5 py-1.5" onClick={() => setEditArea(a)}>👥</button>
-                {a.is_active
-                  ? <button className="btn-secondary text-xs px-2.5 py-1.5" onClick={() => setAreaActive(a, false)}>🚫</button>
-                  : <button className="btn-secondary text-xs px-2.5 py-1.5" onClick={() => setAreaActive(a, true)}>✓</button>}
-                <button className={`btn-secondary text-xs px-2.5 py-1.5 ${list.length > 0 ? 'opacity-40' : 'text-red-600'}`}
-                  title={list.length > 0 ? t('setup.areaNotEmpty') : t('setup.deleteArea')}
-                  onClick={() => deleteArea(a)}>🗑</button>
-              </div>
-            )}
+            <div className="flex flex-wrap gap-1.5 justify-end">
+              <button className="btn-primary text-xs px-2.5 py-1.5" onClick={() => nav(`/areas/${a.id}`)}>
+                {t('setup.openArea')} ›
+              </button>
+              {isCommitteeAdmin && !frozen && (
+                <>
+                  {can('collect') && a.is_active && (
+                    <button className="btn-secondary text-xs px-2.5 py-1.5" onClick={() => openAdd(a.id)}>＋ {unit}</button>
+                  )}
+                  <button className="btn-secondary text-xs px-2.5 py-1.5" onClick={() => setEditArea(a)}>👥</button>
+                  {a.is_active
+                    ? <button className="btn-secondary text-xs px-2.5 py-1.5" onClick={() => setAreaActive(a, false)}>🚫</button>
+                    : <button className="btn-secondary text-xs px-2.5 py-1.5" onClick={() => setAreaActive(a, true)}>✓</button>}
+                  <button className={`btn-secondary text-xs px-2.5 py-1.5 ${list.length > 0 ? 'opacity-40' : 'text-red-600'}`}
+                    title={list.length > 0 ? t('setup.areaNotEmpty') : t('setup.deleteArea')}
+                    onClick={() => deleteArea(a)}>🗑</button>
+                </>
+              )}
+            </div>
           </div>
         </div>
         {isOpen && (
@@ -376,9 +312,14 @@ export default function Areas() {
                     <span className="block text-xs text-stone-500">{units}: {unassigned.length}</span>
                   </span>
                 </button>
-                {can('collect') && !frozen && (
-                  <button className="btn-primary text-xs px-2.5 py-1.5" onClick={() => openAdd('')}>＋ {unit}</button>
-                )}
+                <div className="flex gap-1.5">
+                  <button className="btn-primary text-xs px-2.5 py-1.5" onClick={() => nav('/areas/none')}>
+                    {t('setup.openArea')} ›
+                  </button>
+                  {can('collect') && !frozen && (
+                    <button className="btn-secondary text-xs px-2.5 py-1.5" onClick={() => openAdd('')}>＋ {unit}</button>
+                  )}
+                </div>
               </div>
               {expanded.has('__none') && (
                 <div className="border-t border-stone-100 px-2">
@@ -416,50 +357,11 @@ export default function Areas() {
         </Modal>
       )}
 
-      {entry && (
-        <Modal
-          title={entry.mode === 'add' ? t('collect.addUnit', { unit }) : `${t('setup.editEntry')} — ${entry.house?.name}`}
-          onClose={() => setEntry(null)}>
-          <Field label={t('collect.unitName', { unit })}>
-            <input value={form.name} autoFocus onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          </Field>
-          <GpsPin lat={form.lat} lng={form.lng} unit={unit}
-            onChange={(lat, lng) => setForm((f) => ({ ...f, lat, lng }))} onError={setErr} />
-          <Field label={t('setup.houseOwner')} hint={t('setup.personHint')}>
-            <input value={form.owner} onChange={(e) => setForm({ ...form, owner: e.target.value })} />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label={t('common.phone')}>
-              <input type="tel" inputMode="tel" value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-            </Field>
-            <Field label={t('setup.email')}>
-              <input type="email" inputMode="email" value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })} />
-            </Field>
-          </div>
-          <Field label={t('setup.area')}>
-            <select value={form.areaId} onChange={(e) => setForm({ ...form, areaId: e.target.value })}>
-              <option value="">—</option>
-              {activeAreas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-            </select>
-          </Field>
-          {weekly && (
-            <label className="flex items-center gap-2 mb-3 text-sm">
-              <input type="checkbox" className="w-5 h-5 min-h-0" checked={form.sub}
-                onChange={(e) => setForm({ ...form, sub: e.target.checked })} />
-              📅 {t('collect.subscription')}
-            </label>
-          )}
-          <div className="flex gap-2">
-            <button className="btn-primary flex-1" onClick={saveEntry} disabled={busy || !form.name.trim()}>
-              {t('common.save')}
-            </button>
-            {entry.mode === 'edit' && isCommitteeAdmin && (
-              <button className="btn-danger px-3" onClick={removeEntry}>🗑</button>
-            )}
-          </div>
-        </Modal>
+      {entry && currentProgramId && (
+        <HouseModal mode={entry.mode} house={entry.house} programId={currentProgramId}
+          areas={areas} weekly={weekly} unit={unit} isCommitteeAdmin={isCommitteeAdmin}
+          defaultAreaId={entry.defaultAreaId ?? ''}
+          onClose={() => setEntry(null)} onSaved={load} />
       )}
 
       {showQuick && (
