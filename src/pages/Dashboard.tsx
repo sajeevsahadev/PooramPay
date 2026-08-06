@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase, fmtINR, fmtDate } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
-import { friendlyError } from '../components/ui';
+import { friendlyError, OrgAvatar } from '../components/ui';
 import { Donut, MiniBars, Sparkline } from '../components/charts';
 import { incomeTypeLabel, useUnits } from '../lib/units';
 
@@ -153,17 +153,21 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-5">
-      {/* personalized greeting */}
-      <div>
-        <h1 className="text-xl font-black">
-          {greetKey === 'morning' ? '☀️' : greetKey === 'afternoon' ? '🌤️' : '🌙'}{' '}
-          {t('home.' + greetKey)}{myName ? `, ${myName}` : ''}
-        </h1>
-        <p className="text-sm text-stone-500 truncate">
-          {currentProgram?.committees?.organizations?.name
-            ? `${currentProgram.name} · ${currentProgram.committees.organizations.name}`
-            : `${t('home.myGroups')}: ${memberships.length}`}
-        </p>
+      {/* personalized greeting + current-club identity */}
+      <div className="flex items-center gap-3">
+        <OrgAvatar url={currentProgram?.committees?.organizations?.logo_url}
+          name={currentProgram?.committees?.organizations?.name} className="w-12 h-12" text="text-lg" />
+        <div className="min-w-0">
+          <h1 className="text-xl font-black truncate">
+            {greetKey === 'morning' ? '☀️' : greetKey === 'afternoon' ? '🌤️' : '🌙'}{' '}
+            {t('home.' + greetKey)}{myName ? `, ${myName}` : ''}
+          </h1>
+          <p className="text-sm text-stone-500 truncate">
+            {currentProgram?.committees?.organizations?.name
+              ? `${currentProgram.name} · ${currentProgram.committees.organizations.name}`
+              : `${t('home.myGroups')}: ${memberships.length}`}
+          </p>
+        </div>
       </div>
 
       {msg && <div className="bg-brand-100 text-stone-800 rounded-xl p-3 text-sm" onClick={() => setMsg(null)}>{msg}</div>}

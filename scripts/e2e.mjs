@@ -87,7 +87,7 @@ const pid = prog.id;
 const { data: mems } = await admin.client.from('program_members').select('*').eq('program_id', pid);
 ok('creator auto-added as committee_admin', mems?.some((m) => m.profile_id === admin.id && m.role === 'committee_admin'));
 const { data: heads } = await admin.client.from('expense_heads').select('*').eq('program_id', pid);
-ok('default expense heads seeded', (heads?.length ?? 0) === 8, `got ${heads?.length}`);
+ok('default expense heads seeded', (heads?.length ?? 0) === 9, `got ${heads?.length}`);
 
 const { error: addMemErr } = await admin.client.from('program_members')
   .insert({ program_id: pid, email: 'e2e-collector@poorampay.test', role: 'collector', display_name: 'Collector C' });

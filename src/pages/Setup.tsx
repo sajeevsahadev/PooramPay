@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '../lib/supabase';
+import { supabase, uploadOrgLogo } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { useNavigate } from 'react-router-dom';
-import { Field, ErrorNote, friendlyError, Modal, StatusChip } from '../components/ui';
+import { Field, ErrorNote, friendlyError, Modal, StatusChip, OrgAvatar } from '../components/ui';
 import type { Committee, Organization, Program } from '../lib/types';
 
 const UNIT_LABELS = ['house', 'member', 'family', 'shop', 'unit'] as const;
@@ -45,6 +45,7 @@ export default function Setup() {
   const [copiedMsg, setCopiedMsg] = useState<string | null>(null);
   const [rename, setRename] = useState<{ kind: ManageKind; id: string; name: string } | null>(null);
   const [renameVal, setRenameVal] = useState('');
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const [del, setDel] = useState<{ kind: ManageKind; id: string; name: string } | null>(null);
   const [delConfirm, setDelConfirm] = useState('');
 
@@ -124,8 +125,9 @@ export default function Setup() {
     memberships.some((m) => m.role === 'committee_admin' && m.programs?.committee_id === committeeId);
 
   const openRename = (kind: ManageKind, id: string, name: string) => {
-    setErr(null); setRenameVal(name); setRename({ kind, id, name });
+    setErr(null); setRenameVal(name); setLogoFile(null); setRename({ kind, id, name });
   };
+  const orgOf = (id: string) => orgs.find((o) => o.id === id);
   const openDelete = (kind: ManageKind, id: string, name: string) => {
     setErr(null); setDelConfirm(''); setDel({ kind, id, name });
   };
@@ -136,8 +138,10 @@ export default function Setup() {
     if (!rename) return;
     setBusy(true); setErr(null);
     try {
-      await supabase.from(tableOf(rename.kind)).update({ name: renameVal.trim() }).eq('id', rename.id).throwOnError();
-      setRename(null);
+      const patch: { name: string; logo_url?: string } = { name: renameVal.trim() };
+      if (rename.kind === 'org' && logoFile) patch.logo_url = await uploadOrgLogo(rename.id, logoFile);
+      await supabase.from(tableOf(rename.kind)).update(patch).eq('id', rename.id).throwOnError();
+      setRename(null); setLogoFile(null);
       await Promise.all([load(), refresh()]);
     } catch (e) { setErr(friendlyError(e)); }
     setBusy(false);
@@ -174,13 +178,16 @@ export default function Setup() {
 
       {orgs.map((org) => (
         <div key={org.id} className="card mb-4">
-          <div className="flex justify-between items-center mb-2">
-            <div>
-              <div className="font-bold">{org.name}</div>
-              <div className="text-xs text-stone-500">
-                {t(`setup.${org.org_type === 'other' ? 'otherType' : org.org_type}`)}
-                {[org.place, org.district, org.state].filter(Boolean).length > 0 &&
-                  ` · ${[org.place, org.district, org.state].filter(Boolean).join(', ')}`}
+          <div className="flex justify-between items-center mb-2 gap-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <OrgAvatar url={org.logo_url} name={org.name} className="w-10 h-10" />
+              <div className="min-w-0">
+                <div className="font-bold truncate">{org.name}</div>
+                <div className="text-xs text-stone-500 truncate">
+                  {t(`setup.${org.org_type === 'other' ? 'otherType' : org.org_type}`)}
+                  {[org.place, org.district, org.state].filter(Boolean).length > 0 &&
+                    ` · ${[org.place, org.district, org.state].filter(Boolean).join(', ')}`}
+                </div>
               </div>
             </div>
             {canManageOrg(org) && (
@@ -315,7 +322,20 @@ export default function Setup() {
       )}
 
       {rename && (
-        <Modal title={t('setup.rename')} onClose={() => setRename(null)}>
+        <Modal title={rename.kind === 'org' ? t('setup.editOrg') : t('setup.rename')} onClose={() => setRename(null)}>
+          {rename.kind === 'org' && (
+            <Field label={t('setup.logo')} hint={t('setup.logoHint')}>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <OrgAvatar url={logoFile ? URL.createObjectURL(logoFile) : orgOf(rename.id)?.logo_url}
+                  name={renameVal} className="w-14 h-14" text="text-xl" />
+                <span className="btn-secondary text-sm">
+                  {(logoFile || orgOf(rename.id)?.logo_url) ? t('setup.changeLogo') : t('setup.addLogo')}
+                </span>
+                <input type="file" accept="image/*" className="hidden"
+                  onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)} />
+              </label>
+            </Field>
+          )}
           <Field label={t('common.name')}>
             <input value={renameVal} autoFocus onChange={(e) => setRenameVal(e.target.value)} />
           </Field>

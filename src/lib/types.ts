@@ -68,6 +68,7 @@ export interface Organization {
   state: string | null;
   district: string | null;
   place: string | null;
+  logo_url: string | null;
   created_by: string;
 }
 
@@ -237,4 +238,5 @@ export interface BudgetItem {
   income_type: string | null;
   head_id: string | null;
   planned: number;
+  notes: string | null;
 }

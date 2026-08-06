@@ -6,6 +6,16 @@ export const supabase = createClient(
   { auth: { flowType: 'pkce' } },
 );
 
+/** Upload an organization logo to the public 'logos' bucket; returns its URL. */
+export async function uploadOrgLogo(orgId: string, file: File): Promise<string> {
+  const ext = (file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
+  const path = `${orgId}/${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from('logos')
+    .upload(path, file, { contentType: file.type || undefined });
+  if (error) throw error;
+  return supabase.storage.from('logos').getPublicUrl(path).data.publicUrl;
+}
+
 export function fmtINR(amount: number | null | undefined): string {
   return '₹' + new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(amount ?? 0);
 }

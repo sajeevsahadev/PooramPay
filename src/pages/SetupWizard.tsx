@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '../lib/supabase';
+import { supabase, uploadOrgLogo } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
-import { Field, ErrorNote, friendlyError } from '../components/ui';
+import { Field, ErrorNote, friendlyError, OrgAvatar } from '../components/ui';
 import { COUNTRIES, statesOf, districtsOf } from '../lib/geo';
 import { TIERS, type CommitteeMember, type CommitteePosition, type Tier } from '../lib/types';
 
@@ -42,6 +42,8 @@ export default function SetupWizard() {
   const [orgForm, setOrgForm] = useState({
     name: '', type: 'cultural', country: 'India', state: 'Kerala', district: 'Thrissur', place: '',
   });
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const logoPreview = logoFile ? URL.createObjectURL(logoFile) : null;
   const [comForm, setComForm] = useState({ name: '', desc: '' });
   const [progForm, setProgForm] = useState({
     name: '', year: String(year), opening: '0', weekly: '', weeks: '52', unitLabel: 'house',
@@ -58,6 +60,10 @@ export default function SetupWizard() {
         created_by: session!.user.id,
       }).select('id').single().throwOnError();
       const id = (data as { id: string }).id;
+      if (logoFile) {
+        const url = await uploadOrgLogo(id, logoFile);
+        await supabase.from('organizations').update({ logo_url: url }).eq('id', id);
+      }
       setOrg({ id, name: orgForm.name.trim(), type: orgForm.type });
       setComForm({ name: `${orgForm.name.trim()} Committee ${year}`, desc: '' });
       setProgForm((f) => ({ ...f, unitLabel: DEFAULT_UNIT[orgForm.type] ?? 'house' }));
@@ -137,6 +143,14 @@ export default function SetupWizard() {
           <div className="card">
             <h1 className="text-lg font-bold mb-1">🏢 {t('wizard.newOrgTitle')}</h1>
             <p className="text-sm text-stone-500 mb-4">{t('wizard.introOrg')}</p>
+            <Field label={`${t('setup.logo')} (${t('common.optional')})`} hint={t('setup.logoHint')}>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <OrgAvatar url={logoPreview} name={orgForm.name} className="w-14 h-14" text="text-xl" />
+                <span className="btn-secondary text-sm">{logoFile ? t('setup.changeLogo') : t('setup.addLogo')}</span>
+                <input type="file" accept="image/*" className="hidden"
+                  onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)} />
+              </label>
+            </Field>
             <Field label={t('setup.orgName')}>
               <input value={orgForm.name} autoFocus
                 onChange={(e) => setOrgForm({ ...orgForm, name: e.target.value })} placeholder="Rock Star" />

@@ -18,6 +18,25 @@ export function Empty({ label }: { label?: string }) {
   return <div className="text-center text-stone-400 py-10">{label ?? t('common.none')}</div>;
 }
 
+/** Organization avatar: the uploaded logo, or a colored initial as a fallback. */
+export function OrgAvatar({
+  url, name, className = 'w-8 h-8', text = 'text-sm',
+}: { url?: string | null; name?: string | null; className?: string; text?: string }) {
+  if (url) {
+    return (
+      <img src={url} alt=""
+        className={`${className} rounded-full object-cover bg-white border border-stone-200 shrink-0`} />
+    );
+  }
+  const letter = (name?.trim()?.[0] ?? '★').toUpperCase();
+  return (
+    <div className={`${className} ${text} rounded-full bg-brand-100 text-brand-800 font-black
+      flex items-center justify-center shrink-0`}>
+      {letter}
+    </div>
+  );
+}
+
 export function Modal({
   title, onClose, children,
 }: { title: string; onClose: () => void; children: React.ReactNode }) {

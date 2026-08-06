@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../state/AppContext';
+import { OrgAvatar } from './ui';
 import Tour from './Tour';
 
 const tabIcons: Record<string, string> = {
@@ -10,7 +11,8 @@ const tabIcons: Record<string, string> = {
 
 export default function Shell() {
   const { t } = useTranslation();
-  const { current, programOptions, currentProgramId, setCurrentProgramId, frozen, can, isPadmin } = useApp();
+  const { current, currentProgram, programOptions, currentProgramId, setCurrentProgramId, frozen, can, isPadmin } = useApp();
+  const org = currentProgram?.committees?.organizations;
   const nav = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -96,24 +98,33 @@ export default function Shell() {
                 <line x1="4" y1="18" x2="20" y2="18" />
               </svg>
             </button>
-            <img src="/favicon.svg?v=2" alt="" className="w-8 h-8 rounded-lg md:hidden" />
-            <select
-              value={currentProgramId ?? ''}
-              onChange={(e) => { setCurrentProgramId(e.target.value); nav('/'); }}
-              className="flex-1 md:max-w-sm border-0 bg-transparent font-bold text-stone-800 focus:ring-0"
-            >
-              {isPadmin && orgGroups.length > 1
-                ? orgGroups.map(([org, progs]) => (
-                    <optgroup key={org} label={org}>
-                      {progs.map((p) => (
+            {/* current-club highlight: org logo + program switcher, on every page */}
+            <div className="flex items-center gap-2 flex-1 min-w-0 bg-brand-50 border border-brand-100
+              rounded-full pl-1 pr-2 py-0.5">
+              <OrgAvatar url={org?.logo_url} name={org?.name} className="w-8 h-8" />
+              <div className="flex-1 min-w-0 leading-tight">
+                <select
+                  value={currentProgramId ?? ''}
+                  onChange={(e) => { setCurrentProgramId(e.target.value); nav('/'); }}
+                  className="w-full border-0 bg-transparent font-bold text-stone-800 focus:ring-0 p-0 h-auto min-h-0 text-sm"
+                >
+                  {isPadmin && orgGroups.length > 1
+                    ? orgGroups.map(([o, progs]) => (
+                        <optgroup key={o} label={o}>
+                          {progs.map((p) => (
+                            <option key={p.id} value={p.id}>{p.name} {p.year}</option>
+                          ))}
+                        </optgroup>
+                      ))
+                    : programOptions.map((p) => (
                         <option key={p.id} value={p.id}>{p.name} {p.year}</option>
                       ))}
-                    </optgroup>
-                  ))
-                : programOptions.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name} {p.year}</option>
-                  ))}
-            </select>
+                </select>
+                {org?.name && (
+                  <div className="text-[10px] text-brand-700/70 truncate -mt-0.5 pl-0.5">{org.name}</div>
+                )}
+              </div>
+            </div>
             <span className={`shrink-0 ${isPadmin ? 'chip-blue' : 'chip-gray'}`}>
               {isPadmin ? '🛡️ Admin' : current ? t(`roles.${current.role}`) : ''}
             </span>
