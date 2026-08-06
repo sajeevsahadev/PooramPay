@@ -524,6 +524,13 @@
     "stats": "Usage",
     "deleteOrg": "Delete organization",
     "deleteOrgWarning": "This permanently deletes the organization and ALL its committees, programs, collections, expenses and records. This cannot be undone.",
-    "deleteOrgConfirm": "Type the organization name to confirm: {{name}}"
+    "deleteOrgConfirm": "Type the organization name to confirm: {{name}}",
+    "tabUsers": "Users",
+    "tabOrgs": "Organizations",
+    "tabAdmins": "Admins",
+    "programs": "Programs",
+    "members": "Members",
+    "clubs": "Clubs",
+    "searchUsers": "Search name, email or phone"
   }
 }
