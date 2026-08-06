@@ -59,7 +59,7 @@
 
   /* hero balance card */
   .hero {
-    @apply rounded-2xl p-4 text-white shadow-sm;
+    @apply rounded-2xl p-4 text-white shadow-sm relative overflow-hidden;
     background: linear-gradient(135deg, #4f46e5 0%, #3730a3 60%, #312e81 100%);
   }
   .hero-label { @apply text-[11px] uppercase tracking-wide text-white/70; }

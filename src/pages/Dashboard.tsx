@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase, fmtINR, fmtDate } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { friendlyError, OrgAvatar } from '../components/ui';
+import HeroDecor from '../components/HeroDecor';
 import { Donut, MiniBars, Sparkline } from '../components/charts';
 import { incomeTypeLabel, useUnits } from '../lib/units';
 
@@ -175,24 +176,27 @@ export default function Dashboard() {
       {/* hero balance card */}
       {showMoney && (
         <div className="hero">
-          <div className="flex justify-between items-start gap-3">
-            <div className="min-w-0">
-              <div className="hero-label">{t('dashboard.cashInHand')}</div>
-              <div className="text-3xl font-black money mt-0.5">{fmtINR(finance?.cash_balance)}</div>
+          <HeroDecor />
+          <div className="relative">
+            <div className="flex justify-between items-start gap-3">
+              <div className="min-w-0">
+                <div className="hero-label">{t('dashboard.cashInHand')}</div>
+                <div className="text-3xl font-black money mt-0.5">{fmtINR(finance?.cash_balance)}</div>
+              </div>
+              <div className="text-right min-w-0">
+                <div className="hero-label">{t('dashboard.bankBalance')}</div>
+                <div className="text-xl font-bold money mt-0.5">{fmtINR(finance?.bank_balance)}</div>
+              </div>
             </div>
-            <div className="text-right min-w-0">
-              <div className="hero-label">{t('dashboard.bankBalance')}</div>
-              <div className="text-xl font-bold money mt-0.5">{fmtINR(finance?.bank_balance)}</div>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-white/15">
-            <div>
-              <div className="hero-label">{t('dashboard.collected')}</div>
-              <div className="text-lg font-bold money text-green-300">{fmtINR(finance?.income_total)}</div>
-            </div>
-            <div>
-              <div className="hero-label">{t('dashboard.spent')}</div>
-              <div className="text-lg font-bold money text-rose-200">{fmtINR(finance?.expense_total)}</div>
+            <div className="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-white/15">
+              <div>
+                <div className="hero-label">{t('dashboard.collected')}</div>
+                <div className="text-lg font-bold money text-green-300">{fmtINR(finance?.income_total)}</div>
+              </div>
+              <div>
+                <div className="hero-label">{t('dashboard.spent')}</div>
+                <div className="text-lg font-bold money text-rose-200">{fmtINR(finance?.expense_total)}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -200,8 +204,11 @@ export default function Dashboard() {
 
       {!showMoney && (
         <div className="hero">
-          <div className="hero-label">🙌 {t('home.myCollected')}</div>
-          <div className="text-3xl font-black money mt-0.5">{fmtINR(myCollected)}</div>
+          <HeroDecor />
+          <div className="relative">
+            <div className="hero-label">🙌 {t('home.myCollected')}</div>
+            <div className="text-3xl font-black money mt-0.5">{fmtINR(myCollected)}</div>
+          </div>
         </div>
       )}
 
