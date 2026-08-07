@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { Field, ErrorNote, friendlyError } from '../components/ui';
+import { AmbientScene } from '../components/PageDecor';
+import { randSeed } from '../lib/decor';
 
 /** First-login screen: name confirmation + mandatory mobile number. */
 export default function Onboarding() {
   const { t, i18n } = useTranslation();
   const { profile, refresh } = useApp();
+  const seed = useMemo(() => randSeed(), []);
   const [name, setName] = useState(profile?.full_name ?? '');
   const [phone, setPhone] = useState('');
   const [err, setErr] = useState<string | null>(null);
@@ -29,8 +32,9 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-brand-50">
-      <div className="card w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-brand-50 relative overflow-hidden">
+      <AmbientScene seed={seed} />
+      <div className="card w-full max-w-md relative">
         <h1 className="text-xl font-bold mb-1">{t('auth.completeProfile')}</h1>
         <p className="text-sm text-stone-500 mb-4">{profile?.email}</p>
         <ErrorNote msg={err} />

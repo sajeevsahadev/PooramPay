@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom';
 import { useApp } from './state/AppContext';
 import { Spinner } from './components/ui';
 import Shell from './components/Shell';
+import PageDecor from './components/PageDecor';
 import Login from './pages/Login';
 import Onboarding from './pages/Onboarding';
 import NoProgram from './pages/NoProgram';
@@ -34,10 +35,13 @@ export default function App() {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Spinner /></div>;
   if (!session) return (
-    <Routes>
-      <Route path="/privacy" element={<div className="p-4 min-h-screen"><Privacy /></div>} />
-      <Route path="*" element={<Login />} />
-    </Routes>
+    <>
+      <PageDecor />
+      <Routes>
+        <Route path="/privacy" element={<div className="p-4 min-h-screen"><Privacy /></div>} />
+        <Route path="*" element={<Login />} />
+      </Routes>
+    </>
   );
   if (!profile) return <div className="min-h-screen flex items-center justify-center"><Spinner /></div>;
   if (!profile.phone) return <Onboarding />;
@@ -46,12 +50,15 @@ export default function App() {
 
   if (!hasAccess) {
     return (
-      <Routes>
-        <Route path="/setup/new" element={<SetupWizard />} />
-        <Route path="/setup" element={<div className="p-4 max-w-3xl mx-auto"><Setup /></div>} />
-        <Route path="/privacy" element={<div className="p-4"><Privacy /></div>} />
-        <Route path="*" element={<NoProgram />} />
-      </Routes>
+      <>
+        <PageDecor />
+        <Routes>
+          <Route path="/setup/new" element={<SetupWizard />} />
+          <Route path="/setup" element={<div className="p-4 max-w-3xl mx-auto"><Setup /></div>} />
+          <Route path="/privacy" element={<div className="p-4"><Privacy /></div>} />
+          <Route path="*" element={<NoProgram />} />
+        </Routes>
+      </>
     );
   }
 
