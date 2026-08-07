@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../state/AppContext';
 import { OrgAvatar } from './ui';
+import PageDecor from './PageDecor';
 import Tour from './Tour';
 
 const tabIcons: Record<string, string> = {
@@ -59,6 +60,7 @@ export default function Shell() {
 
   return (
     <div className="min-h-screen md:flex">
+      <PageDecor />
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:flex-col w-60 shrink-0 min-h-screen sticky top-0 bg-white border-r border-stone-200">
         <div className="p-4 font-black text-xl tracking-tight flex items-center gap-2 text-brand-800">
