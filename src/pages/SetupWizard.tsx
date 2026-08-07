@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase, uploadOrgLogo } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { Field, ErrorNote, friendlyError, OrgAvatar } from '../components/ui';
+import { AmbientScene } from '../components/PageDecor';
+import { randSeed } from '../lib/decor';
 import { COUNTRIES, statesOf, districtsOf } from '../lib/geo';
 import { TIERS, type CommitteeMember, type CommitteePosition, type Tier } from '../lib/types';
 
@@ -30,6 +32,7 @@ export default function SetupWizard() {
   const [step, setStep] = useState(1);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const decorSeed = useMemo(() => randSeed(), []);
 
   // persisted ids as we advance
   const [org, setOrg] = useState<{ id: string; name: string; type: string } | null>(null);
@@ -126,8 +129,9 @@ export default function SetupWizard() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-100">
-      <div className="max-w-xl mx-auto p-4">
+    <div className="min-h-screen bg-stone-100 relative overflow-hidden">
+      <AmbientScene seed={decorSeed} />
+      <div className="max-w-xl mx-auto p-4 relative">
         <div className="flex items-center justify-between mb-1">
           <button className="text-stone-400 text-sm" onClick={() => nav('/setup')}>✕</button>
           <span className="text-xs text-stone-500">{t('wizard.step', { n: step, total: STEPS })}</span>

@@ -28,20 +28,24 @@ export function AmbientScene({ seed }: { seed: number }) {
   }));
 
   return (
-    <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden" aria-hidden="true">
-      <svg className="w-full h-full" viewBox="0 0 1000 800" preserveAspectRatio="xMidYMid slice">
-        <g transform={`rotate(${between(r, -20, 20)} ${pk.x} ${pk.y})`}>
-          {pookalam(pk.x, pk.y, between(r, 1.9, 2.6), [INK, INK, INK, INK], 0.05)}
-        </g>
-        {parasol(pr.x, pr.y, between(r, 34, 46), AMBER, 0.06)}
-        {sparks.map((x, k) => <g key={k}>{spark(x.x, x.y, x.s, INK, 0.045)}</g>)}
-      </svg>
-    </div>
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true"
+      viewBox="0 0 1000 800" preserveAspectRatio="xMidYMid slice">
+      <g transform={`rotate(${between(r, -20, 20)} ${pk.x} ${pk.y})`}>
+        {pookalam(pk.x, pk.y, between(r, 1.9, 2.6), [INK, INK, INK, INK], 0.05)}
+      </g>
+      {parasol(pr.x, pr.y, between(r, 34, 46), AMBER, 0.06)}
+      {sparks.map((x, k) => <g key={k}>{spark(x.x, x.y, x.s, INK, 0.045)}</g>)}
+    </svg>
   );
 }
 
+/** App-wide watermark behind Shell pages (the Shell root has no background). */
 export default function PageDecor() {
   const { pathname } = useLocation();
   const seed = useMemo(() => randSeed(), [pathname]);
-  return <AmbientScene seed={seed} />;
+  return (
+    <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden" aria-hidden="true">
+      <AmbientScene seed={seed} />
+    </div>
+  );
 }

@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { setLanguage } from '../i18n';
 import Tour from '../components/Tour';
+import { AmbientScene } from '../components/PageDecor';
+import { randSeed } from '../lib/decor';
 
 export default function Login() {
   const { t, i18n } = useTranslation();
   const [showTour, setShowTour] = useState(false);
+  const seed = useMemo(() => randSeed(), []);
 
   const signIn = () =>
     supabase.auth.signInWithOAuth({
@@ -16,8 +19,9 @@ export default function Login() {
     });
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-brand-50 to-stone-100">
-      <div className="card w-full max-w-sm flex flex-col items-center py-10 px-8">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-brand-50 to-stone-100 relative overflow-hidden">
+      <AmbientScene seed={seed} />
+      <div className="card w-full max-w-sm flex flex-col items-center py-10 px-8 relative">
         <img src="/icon.svg?v=2" alt="" className="w-20 h-20 rounded-2xl shadow-sm mb-5" />
         <h1 className="text-3xl font-black mb-2 text-brand-800">{t('app.name')}</h1>
         <p className="text-stone-500 text-center text-sm mb-8">{t('app.tagline')}</p>
