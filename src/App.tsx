@@ -3,7 +3,7 @@ import { useApp } from './state/AppContext';
 import { Spinner } from './components/ui';
 import Shell from './components/Shell';
 import PageDecor from './components/PageDecor';
-import Login from './pages/Login';
+import Landing from './pages/Landing';
 import Onboarding from './pages/Onboarding';
 import NoProgram from './pages/NoProgram';
 import Dashboard from './pages/Dashboard';
@@ -22,6 +22,7 @@ import SetupWizard from './pages/SetupWizard';
 import Members from './pages/Members';
 import Areas from './pages/Areas';
 import AreaDetail from './pages/AreaDetail';
+import Nearby from './pages/Nearby';
 import Budget from './pages/Budget';
 import AuditLog from './pages/AuditLog';
 import DeletedTx from './pages/DeletedTx';
@@ -39,7 +40,7 @@ export default function App() {
       <PageDecor />
       <Routes>
         <Route path="/privacy" element={<div className="p-4 min-h-screen"><Privacy /></div>} />
-        <Route path="*" element={<Login />} />
+        <Route path="*" element={<Landing />} />
       </Routes>
     </>
   );
@@ -55,6 +56,7 @@ export default function App() {
         <Routes>
           <Route path="/setup/new" element={<SetupWizard />} />
           <Route path="/setup" element={<div className="p-4 max-w-3xl mx-auto"><Setup /></div>} />
+          <Route path="/nearby" element={<div className="p-4 max-w-2xl mx-auto"><Nearby /></div>} />
           <Route path="/privacy" element={<div className="p-4"><Privacy /></div>} />
           <Route path="*" element={<NoProgram />} />
         </Routes>
@@ -81,6 +83,7 @@ export default function App() {
         <Route path="/members" element={<Members />} />
         <Route path="/areas" element={<Areas />} />
         <Route path="/areas/:id" element={<AreaDetail />} />
+        <Route path="/nearby" element={<Nearby />} />
         <Route path="/budget" element={<Budget />} />
         <Route path="/audit" element={<AuditLog />} />
         <Route path="/deleted" element={<DeletedTx />} />

@@ -91,6 +91,7 @@ export interface Program {
   weekly_amount: number | null;
   total_weeks: number;
   unit_label: UnitLabel;
+  is_demo?: boolean;
   results_published: boolean;
   results_published_at: string | null;
   results_snapshot: {

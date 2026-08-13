@@ -15,7 +15,7 @@ interface TxRow {
 export default function Dashboard() {
   const { t, i18n } = useTranslation();
   const { profile, memberships, finance, current, currentProgram, currentProgramId, setCurrentProgramId,
-    can, refreshFinance, session, frozen, isCommitteeAdmin } = useApp();
+    can, refreshFinance, refresh, session, frozen, isCommitteeAdmin } = useApp();
   const { unit } = useUnits();
   const [recent, setRecent] = useState<TxRow[]>([]);
   const [myCash, setMyCash] = useState(0);
@@ -117,6 +117,13 @@ export default function Dashboard() {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [currentProgramId]);
 
+  const leaveDemo = async () => {
+    try {
+      await supabase.rpc('leave_demo').throwOnError();
+      await refresh();
+    } catch (e) { setMsg(friendlyError(e)); }
+  };
+
   const handover = async () => {
     try {
       await supabase.rpc('create_handover', { p_program: currentProgramId }).throwOnError();
@@ -154,6 +161,12 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-5">
+      {currentProgram?.is_demo && (
+        <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 flex items-center justify-between gap-2">
+          <span className="text-sm text-amber-900">🎪 {t('demo.banner')}</span>
+          <button className="btn-secondary text-xs px-3 py-1.5 shrink-0" onClick={leaveDemo}>{t('demo.leave')}</button>
+        </div>
+      )}
       {/* personalized greeting + current-club identity */}
       <div className="flex items-center gap-3">
         <OrgAvatar url={currentProgram?.committees?.organizations?.logo_url}
