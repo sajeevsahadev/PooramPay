@@ -5,11 +5,12 @@ import { supabase } from '../lib/supabase';
 import { setLanguage } from '../i18n';
 import Tour from '../components/Tour';
 import { HeroScene } from '../components/HeroDecor';
-import { AmbientScene } from '../components/PageDecor';
 import { randSeed } from '../lib/decor';
 
+const INDIGO = 'linear-gradient(135deg,#4f46e5 0%,#3730a3 55%,#312e81 100%)';
+
 const GoogleIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
+  <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true" className="shrink-0">
     <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
     <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
     <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
@@ -17,130 +18,172 @@ const GoogleIcon = () => (
   </svg>
 );
 
-/** Public marketing / SEO landing page — storytelling, features, bilingual, CTA. */
+/** A miniature of the real app dashboard — the product shot for the hero. */
+function PhoneMock() {
+  const Row = ({ l, a, up }: { l: string; a: string; up: boolean }) => (
+    <div className="flex justify-between text-[8px]">
+      <span className="text-stone-600 truncate mr-1">{l}</span>
+      <span className={`font-bold shrink-0 ${up ? 'text-green-700' : 'text-red-700'}`}>{a}</span>
+    </div>
+  );
+  return (
+    <div className="mx-auto w-[236px] shrink-0" aria-hidden="true">
+      <div className="rounded-[2.3rem] bg-stone-900 p-2 shadow-2xl ring-1 ring-black/10">
+        <div className="rounded-[1.8rem] bg-[#eef0fa] overflow-hidden">
+          <div className="flex items-center gap-1.5 px-2.5 py-2 bg-white">
+            <img src="/icon.svg?v=2" alt="" className="w-4 h-4 rounded" />
+            <span className="text-[8px] font-bold text-stone-800">Onam 2026</span>
+            <span className="ml-auto text-[7px] bg-blue-100 text-blue-800 rounded-full px-1.5 py-0.5 font-semibold">Admin</span>
+          </div>
+          <div className="p-2 space-y-2">
+            <div className="rounded-xl p-2.5 text-white" style={{ background: INDIGO }}>
+              <div className="flex justify-between">
+                <div><div className="text-[6px] uppercase tracking-wide text-white/70">Cash in hand</div><div className="text-[14px] font-black">₹48,250</div></div>
+                <div className="text-right"><div className="text-[6px] uppercase tracking-wide text-white/70">Bank</div><div className="text-[11px] font-bold">₹1,20,000</div></div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mt-1.5 pt-1.5 border-t border-white/15">
+                <div><div className="text-[6px] uppercase tracking-wide text-white/70">Collected</div><div className="text-[9px] font-bold text-green-300">₹2,10,400</div></div>
+                <div><div className="text-[6px] uppercase tracking-wide text-white/70">Spent</div><div className="text-[9px] font-bold text-rose-200">₹42,150</div></div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-2 grid grid-cols-4 gap-1.5">
+              {['💰', '🎟️', '🧾', '📊'].map((e, i) => (
+                <div key={i} className="w-7 h-7 mx-auto rounded-full bg-brand-50 border border-brand-100 flex items-center justify-center text-[13px]">{e}</div>
+              ))}
+            </div>
+            <div className="bg-white rounded-xl p-2 space-y-1.5">
+              <Row l="Member Collection · Sanu" a="+ ₹500" up />
+              <Row l="Light & sound" a="− ₹12,000" up={false} />
+              <Row l="Coupon remit · B-12" a="+ ₹2,500" up />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Landing() {
   const { t, i18n } = useTranslation();
   const [showTour, setShowTour] = useState(false);
   const seed = useMemo(() => randSeed(), []);
-
   const signIn = () =>
     supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
 
-  const SignInBtn = ({ className = '' }: { className?: string }) => (
-    <button onClick={signIn}
-      className={`btn bg-white border border-stone-300 text-stone-800 hover:bg-stone-50 shadow-sm ${className}`}>
-      <GoogleIcon /> {t('landing.signIn')}
-    </button>
-  );
-
   const steps = [
-    { icon: '🏛️', title: t('landing.how1Title'), body: t('landing.how1Body') },
-    { icon: '💰', title: t('landing.how2Title'), body: t('landing.how2Body') },
-    { icon: '🧾', title: t('landing.how3Title'), body: t('landing.how3Body') },
-    { icon: '📊', title: t('landing.how4Title'), body: t('landing.how4Body') },
+    { icon: '🏛️', tint: 'bg-brand-50 border-brand-100', title: t('landing.how1Title'), body: t('landing.how1Body') },
+    { icon: '💰', tint: 'bg-amber-50 border-amber-100', title: t('landing.how2Title'), body: t('landing.how2Body') },
+    { icon: '🧾', tint: 'bg-sky-50 border-sky-100', title: t('landing.how3Title'), body: t('landing.how3Body') },
+    { icon: '📊', tint: 'bg-green-50 border-green-100', title: t('landing.how4Title'), body: t('landing.how4Body') },
   ];
   const features = ['f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8'].map((k) => t(`landing.${k}`));
 
   return (
-    <div className="min-h-screen bg-app relative overflow-hidden">
-      <AmbientScene seed={seed} />
-      <div className="relative">
-        {/* top bar */}
-        <header className="sticky top-0 z-30 bg-white/85 backdrop-blur border-b border-stone-100">
-          <div className="max-w-3xl mx-auto flex items-center gap-2 px-4 py-2.5">
-            <img src="/icon.svg?v=2" alt="PooramPay" className="w-8 h-8 rounded-lg" />
-            <span className="font-black text-brand-800">{t('app.name')}</span>
-            <div className="ml-auto flex items-center gap-2">
-              <div className="flex rounded-full border border-stone-200 overflow-hidden text-xs">
-                {[{ c: 'en', l: 'EN' }, { c: 'ml', l: 'മല' }].map((x) => (
-                  <button key={x.c} onClick={() => setLanguage(x.c)}
-                    className={`px-2.5 py-1 min-h-0 font-semibold ${i18n.language === x.c ? 'bg-brand-700 text-white' : 'text-stone-500'}`}>
-                    {x.l}
-                  </button>
-                ))}
-              </div>
-              <button onClick={signIn} className="btn-primary text-sm px-3 py-1.5">{t('landing.heroCta')}</button>
+    <div className="min-h-screen bg-app">
+      {/* top bar */}
+      <header className="sticky top-0 z-30 bg-white/85 backdrop-blur border-b border-stone-100">
+        <div className="max-w-5xl mx-auto flex items-center gap-2 px-4 py-2.5">
+          <img src="/icon.svg?v=2" alt="PooramPay" className="w-8 h-8 rounded-lg" />
+          <span className="font-black text-brand-800">{t('app.name')}</span>
+          <div className="ml-auto flex items-center gap-2">
+            <div className="flex rounded-full border border-stone-200 overflow-hidden text-xs">
+              {[{ c: 'en', l: 'EN' }, { c: 'ml', l: 'മല' }].map((x) => (
+                <button key={x.c} onClick={() => setLanguage(x.c)}
+                  className={`px-2.5 py-1 min-h-0 font-semibold ${i18n.language === x.c ? 'bg-brand-700 text-white' : 'text-stone-500'}`}>
+                  {x.l}
+                </button>
+              ))}
             </div>
+            <button onClick={signIn} className="btn-primary text-sm px-3 py-1.5">{t('landing.heroCta')}</button>
           </div>
-        </header>
+        </div>
+      </header>
 
-        <main className="max-w-3xl mx-auto px-4 pb-16">
-          {/* hero */}
-          <section className="text-center pt-10 pb-8">
-            <img src="/icon.svg?v=2" alt="" className="w-20 h-20 rounded-2xl shadow-sm mx-auto mb-5" />
-            <h1 className="text-3xl sm:text-4xl font-black text-brand-800 leading-tight mb-3">{t('landing.heroTitle')}</h1>
-            <p className="text-stone-600 max-w-xl mx-auto mb-6">{t('landing.heroSub')}</p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-              <SignInBtn className="w-full sm:w-auto px-6 py-3" />
-              <button onClick={() => setShowTour(true)} className="btn-secondary w-full sm:w-auto px-6 py-3">
+      {/* HERO — full-width festival gradient + product mockup */}
+      <section className="relative overflow-hidden text-white" style={{ background: INDIGO }}>
+        <HeroScene seed={seed} />
+        <div className="relative max-w-5xl mx-auto px-4 py-12 sm:py-16 grid md:grid-cols-2 gap-10 items-center">
+          <div className="text-center md:text-left">
+            <div className="inline-block text-[11px] font-semibold bg-white/15 rounded-full px-3 py-1 mb-4">🎪 {t('landing.eyebrow')}</div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black leading-tight mb-4">{t('landing.heroTitle')}</h1>
+            <p className="text-white/85 mb-6 max-w-md mx-auto md:mx-0">{t('landing.heroSub')}</p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+              <button onClick={signIn} className="btn bg-white text-brand-800 hover:bg-stone-100 px-6 py-3 font-bold shadow-lg">
+                <GoogleIcon /> {t('landing.signIn')}
+              </button>
+              <button onClick={() => setShowTour(true)} className="btn bg-white/10 border border-white/30 text-white hover:bg-white/20 px-6 py-3">
                 ❓ {t('landing.heroTour')}
               </button>
             </div>
-            <p className="text-xs text-stone-400 mt-4">{t('landing.forWho')}</p>
-          </section>
+            <p className="text-white/60 text-xs mt-4">{t('landing.trust')}</p>
+          </div>
+          <PhoneMock />
+        </div>
+      </section>
 
-          {/* story */}
-          <section className="card mb-8">
-            <h2 className="text-xl font-bold mb-2">{t('landing.storyTitle')}</h2>
-            <p className="text-stone-600 leading-relaxed mb-3">{t('landing.storyBody')}</p>
-            <p className="font-semibold text-brand-800">{t('landing.storySolve')}</p>
-          </section>
+      <main className="max-w-3xl mx-auto px-4 py-12 space-y-12">
+        {/* story */}
+        <section className="card">
+          <h2 className="text-xl font-bold mb-2">{t('landing.storyTitle')}</h2>
+          <p className="text-stone-600 leading-relaxed mb-3">{t('landing.storyBody')}</p>
+          <p className="font-semibold text-brand-800">{t('landing.storySolve')}</p>
+        </section>
 
-          {/* how it works */}
-          <section className="mb-8">
-            <h2 className="section-title text-lg">{t('landing.howTitle')}</h2>
-            <div className="grid sm:grid-cols-2 gap-3">
-              {steps.map((s, i) => (
-                <div key={i} className="card flex gap-3">
-                  <div className="w-11 h-11 shrink-0 rounded-full bg-brand-50 border border-brand-100 flex items-center justify-center text-2xl">
-                    {s.icon}
-                  </div>
-                  <div>
-                    <div className="font-bold text-sm mb-0.5">
-                      <span className="text-brand-600">{i + 1}.</span> {s.title}
-                    </div>
-                    <div className="text-sm text-stone-600 leading-snug">{s.body}</div>
-                  </div>
+        {/* how it works */}
+        <section>
+          <h2 className="text-2xl font-black text-center mb-6">{t('landing.howTitle')}</h2>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {steps.map((s, i) => (
+              <div key={i} className="card flex gap-3">
+                <div className={`w-12 h-12 shrink-0 rounded-full border flex items-center justify-center text-2xl ${s.tint}`}>{s.icon}</div>
+                <div>
+                  <div className="font-bold text-sm mb-0.5"><span className="text-brand-600">{i + 1}.</span> {s.title}</div>
+                  <div className="text-sm text-stone-600 leading-snug">{s.body}</div>
                 </div>
-              ))}
-            </div>
-          </section>
+              </div>
+            ))}
+          </div>
+        </section>
 
-          {/* trust — indigo hero card with festival motifs */}
-          <section className="hero mb-8">
-            <HeroScene seed={seed + 7} />
-            <div className="relative">
-              <h2 className="text-xl font-bold mb-2">🔒 {t('landing.trustTitle')}</h2>
-              <p className="text-white/85 leading-relaxed">{t('landing.trustBody')}</p>
-            </div>
-          </section>
+        {/* features */}
+        <section>
+          <h2 className="text-2xl font-black text-center mb-6">{t('landing.featuresTitle')}</h2>
+          <div className="card grid sm:grid-cols-2 gap-x-6 gap-y-3">
+            {features.map((f, i) => (
+              <div key={i} className="flex items-start gap-2 text-sm">
+                <span className="w-5 h-5 shrink-0 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs">✓</span>
+                <span className="text-stone-700 pt-0.5">{f}</span>
+              </div>
+            ))}
+          </div>
+        </section>
 
-          {/* features */}
-          <section className="mb-8">
-            <h2 className="section-title text-lg">{t('landing.featuresTitle')}</h2>
-            <div className="card grid sm:grid-cols-2 gap-x-6 gap-y-3">
-              {features.map((f, i) => (
-                <div key={i} className="flex items-start gap-2 text-sm">
-                  <span className="text-brand-600 mt-0.5 shrink-0">✓</span>
-                  <span className="text-stone-700">{f}</span>
-                </div>
-              ))}
-            </div>
-          </section>
+        {/* trust */}
+        <section className="hero">
+          <HeroScene seed={seed + 5} />
+          <div className="relative">
+            <h2 className="text-xl font-bold mb-2">🔒 {t('landing.trustTitle')}</h2>
+            <p className="text-white/85 leading-relaxed">{t('landing.trustBody')}</p>
+          </div>
+        </section>
 
-          {/* final CTA */}
-          <section className="text-center card">
-            <h2 className="text-2xl font-black text-brand-800 mb-2">{t('landing.ctaTitle')}</h2>
-            <p className="text-stone-600 mb-5 max-w-md mx-auto">{t('landing.ctaBody')}</p>
-            <SignInBtn className="px-6 py-3" />
-            <div className="mt-5 text-xs text-stone-400">
+        {/* closing CTA band */}
+        <section className="rounded-3xl p-8 text-center text-white relative overflow-hidden shadow-lg" style={{ background: INDIGO }}>
+          <HeroScene seed={seed + 9} />
+          <div className="relative">
+            <h2 className="text-2xl sm:text-3xl font-black mb-2">{t('landing.ctaTitle')}</h2>
+            <p className="text-white/85 mb-6 max-w-md mx-auto">{t('landing.ctaBody')}</p>
+            <button onClick={signIn} className="btn bg-white text-brand-800 hover:bg-stone-100 px-7 py-3 font-bold shadow-lg">
+              <GoogleIcon /> {t('landing.signIn')}
+            </button>
+            <div className="mt-5 text-xs text-white/60">
               English · മലയാളം &nbsp;·&nbsp;
               <Link to="/privacy" className="underline">{t('privacy.title')}</Link>
               &nbsp;·&nbsp; www.poorampay.com
             </div>
-          </section>
-        </main>
-      </div>
+          </div>
+        </section>
+      </main>
       {showTour && <Tour onClose={() => setShowTour(false)} />}
     </div>
   );
