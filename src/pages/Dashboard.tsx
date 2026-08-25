@@ -36,7 +36,7 @@ export default function Dashboard() {
   }, [currentProgramId]);
   const [budgetExpense, setBudgetExpense] = useState(0);
   const [incomeByType, setIncomeByType] = useState<{ label: string; value: number }[]>([]);
-  const [dailyIncome, setDailyIncome] = useState<number[]>([]);
+  const [dailyIncome, setDailyIncome] = useState<{ label: string; value: number }[]>([]);
   const [pendingHandovers, setPendingHandovers] = useState<
     { id: string; amount: number; from_profile: string }[]
   >([]);
@@ -107,10 +107,12 @@ export default function Dashboard() {
     // fill missing days with zero so the sparkline shows real rhythm
     const dayMap = new Map(((byDay.data ?? []) as { entry_date: string; total: number }[])
       .map((r) => [r.entry_date, Number(r.total)]));
-    const days: number[] = [];
+    const days: { label: string; value: number }[] = [];
+    const dayFmt = new Intl.DateTimeFormat(i18n.language === 'ml' ? 'ml-IN' : 'en-IN', { day: 'numeric', month: 'short' });
     for (let i = 13; i >= 0; i--) {
-      const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
-      days.push(dayMap.get(d) ?? 0);
+      const date = new Date(Date.now() - i * 86400000);
+      const key = date.toISOString().slice(0, 10);
+      days.push({ label: dayFmt.format(date), value: dayMap.get(key) ?? 0 });
     }
     setDailyIncome(days);
   };
@@ -140,7 +142,7 @@ export default function Dashboard() {
   };
 
   const showMoney = can('view_money');
-  const spark14 = dailyIncome.reduce((a, b) => a + b, 0);
+  const spark14 = dailyIncome.reduce((a, b) => a + b.value, 0);
   const pendingApprovals = can('approve') ? (finance?.pending_claims ?? 0) : 0;
 
   const hour = new Date().getHours();
@@ -306,7 +308,7 @@ export default function Dashboard() {
               <div className="text-sm font-bold">⚡ {t('dashboard.collected')} · 14d</div>
               <div className="money text-sm font-bold text-green-700">{fmtINR(spark14)}</div>
             </div>
-            <Sparkline points={dailyIncome} />
+            <Sparkline points={dailyIncome.map((d) => d.value)} labels={dailyIncome.map((d) => d.label)} format={fmtINR} />
             <div className="mt-3 text-sm font-bold mb-1">🌈 {t('reports.byType')}</div>
             <MiniBars data={incomeByType} format={fmtINR} />
           </div>
