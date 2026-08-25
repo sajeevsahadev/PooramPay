@@ -11,14 +11,14 @@ export default function More() {
   const { profile, can, isCommitteeAdmin, isPadmin } = useApp();
   const [showTour, setShowTour] = useState(false);
 
-  const links = [
+  const links: { to: string; icon: string; tile: string; label: string; desc?: string; show: boolean }[] = [
     { to: '/transactions', icon: '📒', tile: 'tile-cyan', label: t('nav.transactions'), show: can('view_money') },
     { to: '/reports', icon: '📊', tile: 'tile-fuchsia', label: t('nav.reports'), show: true },
     { to: '/coupons', icon: '🎟️', tile: 'tile-violet', label: t('nav.coupons'), show: can('coupons') },
     { to: '/members', icon: '👥', tile: 'tile-lime', label: t('nav.members'), show: true },
     { to: '/areas', icon: '🗺️', tile: 'tile-amber', label: t('nav.areas'), show: true },
     { to: '/budget', icon: '🎯', tile: 'tile-rose', label: t('nav.budget'), show: isCommitteeAdmin },
-    { to: '/setup', icon: '⚙️', tile: 'tile-cyan', label: t('nav.setup'), show: true },
+    { to: '/setup', icon: '⚙️', tile: 'tile-cyan', label: t('nav.setup'), desc: t('nav.setupDesc'), show: true },
     { to: '/audit', icon: '📜', tile: 'tile-violet', label: t('nav.auditLog'), show: true },
     { to: '/deleted', icon: '🗑️', tile: 'tile-rose', label: t('nav.deletedTx'), show: can('view_money') },
     { to: '/admin', icon: '🛡️', tile: 'tile-amber', label: t('nav.admin'), show: isPadmin },
@@ -47,7 +47,10 @@ export default function More() {
           <Link key={l.to} to={l.to}
             className="flex items-center gap-3 px-4 py-2.5 border-b border-stone-100 last:border-0 hover:bg-brand-50">
             <span className={`tile ${l.tile} w-9 h-9 text-lg`}>{l.icon}</span>
-            <span className="flex-1 font-medium">{l.label}</span>
+            <span className="flex-1 min-w-0">
+              <span className="block font-medium">{l.label}</span>
+              {l.desc && <span className="block text-xs text-stone-400 leading-tight">{l.desc}</span>}
+            </span>
             <span className="text-stone-300">›</span>
           </Link>
         ))}

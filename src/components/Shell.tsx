@@ -12,7 +12,7 @@ const tabIcons: Record<string, string> = {
 
 export default function Shell() {
   const { t } = useTranslation();
-  const { current, currentProgram, programOptions, currentProgramId, setCurrentProgramId, frozen, can, isPadmin } = useApp();
+  const { current, currentProgram, programOptions, currentProgramId, setCurrentProgramId, frozen, can, isCommitteeAdmin, isPadmin } = useApp();
   const org = currentProgram?.committees?.organizations;
   const nav = useNavigate();
   const location = useLocation();
@@ -48,15 +48,22 @@ export default function Shell() {
   ].filter((x) => x.show);
 
   const sideLinks = [
-    { to: '/', label: t('nav.home'), icon: '🏠' },
-    ...(can('collect') && !frozen ? [{ to: '/collect', label: t('nav.collect'), icon: '💰' }] : []),
-    { to: '/expenses', label: t('nav.expenses'), icon: '🧾' },
-    ...(can('coupons') ? [{ to: '/coupons', label: t('nav.coupons'), icon: '🎟️' }] : []),
-    { to: '/transactions', label: t('nav.transactions'), icon: '📒' },
-    { to: '/tasks', label: t('nav.tasks'), icon: '✅' },
-    { to: '/reports', label: t('nav.reports'), icon: '📊' },
-    { to: '/more', label: t('nav.more'), icon: '☰' },
-  ];
+    { to: '/', label: t('nav.home'), icon: '🏠', show: true },
+    ...(can('collect') && !frozen ? [{ to: '/collect', label: t('nav.collect'), icon: '💰', show: true }] : []),
+    { to: '/expenses', label: t('nav.expenses'), icon: '🧾', show: can('expense') || can('approve') },
+    ...(can('coupons') ? [{ to: '/coupons', label: t('nav.coupons'), icon: '🎟️', show: true }] : []),
+    { to: '/tasks', label: t('nav.tasks'), icon: '✅', show: true },
+    { to: '/transactions', label: t('nav.transactions'), icon: '📒', show: can('view_money') },
+    { to: '/reports', label: t('nav.reports'), icon: '📊', show: true },
+    { to: '/members', label: t('nav.members'), icon: '👥', show: true },
+    { to: '/areas', label: t('nav.areas'), icon: '🗺️', show: true },
+    { to: '/budget', label: t('nav.budget'), icon: '🎯', show: isCommitteeAdmin },
+    { to: '/setup', label: t('nav.setup'), icon: '⚙️', show: true },
+    { to: '/audit', label: t('nav.auditLog'), icon: '📜', show: true },
+    { to: '/deleted', label: t('nav.deletedTx'), icon: '🗑️', show: can('view_money') },
+    ...(isPadmin ? [{ to: '/admin', label: t('nav.admin'), icon: '🛡️', show: true }] : []),
+    { to: '/more', label: t('nav.more'), icon: '☰', show: true },
+  ].filter((x) => x.show);
 
   return (
     <div className="min-h-screen md:flex">
