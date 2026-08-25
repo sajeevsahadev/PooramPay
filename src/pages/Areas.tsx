@@ -32,6 +32,7 @@ export default function Areas() {
   const [houses, setHouses] = useState<House[]>([]);
   const [members, setMembers] = useState<Membership[]>([]);
   const [paidSet, setPaidSet] = useState<Set<string>>(new Set());
+  const [avatars, setAvatars] = useState<Map<string, string>>(new Map());
   const [err, setErr] = useState<string | null>(null);
 
   // browse / search state
@@ -61,17 +62,20 @@ export default function Areas() {
 
   const load = async () => {
     if (!currentProgramId) return;
-    const [a, h, m, paid] = await Promise.all([
+    const [a, h, m, paid, av] = await Promise.all([
       supabase.from('areas').select('*').eq('program_id', currentProgramId).order('name'),
       supabase.from('houses').select('*').eq('program_id', currentProgramId).order('sort_order').order('name'),
       supabase.from('program_members').select('*, profiles(nickname, full_name)').eq('program_id', currentProgramId),
-      supabase.from('income_entries').select('house_id')
-        .eq('program_id', currentProgramId).not('house_id', 'is', null).is('deleted_at', null),
+      // aggregate (index-only) instead of pulling every transaction to the client
+      supabase.rpc('program_paid_houses', { p_program: currentProgramId }),
+      supabase.rpc('program_member_avatars', { p_program: currentProgramId }),
     ]);
     setAreas((a.data ?? []) as Area[]);
     setHouses((h.data ?? []) as House[]);
     setMembers((m.data ?? []) as Membership[]);
     setPaidSet(new Set(((paid.data ?? []) as { house_id: string }[]).map((r) => r.house_id)));
+    setAvatars(new Map(((av.data ?? []) as { house_id: string; avatar_url: string }[])
+      .map((r) => [r.house_id, r.avatar_url])));
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [currentProgramId]);
 
@@ -227,7 +231,7 @@ export default function Areas() {
             {list.length === 0 && <div className="p-3 text-sm text-stone-400">{t('common.none')}</div>}
             {list.slice(0, limit).map((h) => (
               <div className="px-2" key={h.id}>
-                <HouseRow h={h} paid={paidSet.has(h.id)} onClick={() => openEdit(h)} />
+                <HouseRow h={h} paid={paidSet.has(h.id)} avatarUrl={avatars.get(h.id)} onClick={() => openEdit(h)} />
               </div>
             ))}
             {list.length > limit && (
@@ -288,7 +292,7 @@ export default function Areas() {
           <div className="px-2">
             {searchResults.slice(0, searchLimit).map((h) => (
               <HouseRow key={h.id} h={h} areaName={areaNameOf(h.area_id)}
-                paid={paidSet.has(h.id)} onClick={() => openEdit(h)} />
+                paid={paidSet.has(h.id)} avatarUrl={avatars.get(h.id)} onClick={() => openEdit(h)} />
             ))}
           </div>
           {searchResults.length > searchLimit && (
@@ -324,7 +328,7 @@ export default function Areas() {
               {expanded.has('__none') && (
                 <div className="border-t border-stone-100 px-2">
                   {unassigned.slice(0, limitBy['__none'] ?? PAGE).map((h) => (
-                    <HouseRow key={h.id} h={h} paid={paidSet.has(h.id)} onClick={() => openEdit(h)} />
+                    <HouseRow key={h.id} h={h} paid={paidSet.has(h.id)} avatarUrl={avatars.get(h.id)} onClick={() => openEdit(h)} />
                   ))}
                   {unassigned.length > (limitBy['__none'] ?? PAGE) && (
                     <button className="w-full py-2 text-sm text-brand-700 font-semibold"

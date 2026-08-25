@@ -28,6 +28,7 @@ export default function AreaDetail() {
   const [areas, setAreas] = useState<Area[]>([]);
   const [houses, setHouses] = useState<House[]>([]);
   const [paidSet, setPaidSet] = useState<Set<string>>(new Set());
+  const [avatars, setAvatars] = useState<Map<string, string>>(new Map());
   const [err, setErr] = useState<string | null>(null);
 
   const [q, setQ] = useState('');
@@ -47,17 +48,20 @@ export default function AreaDetail() {
   const load = async () => {
     if (!currentProgramId) return;
     const houseQ = supabase.from('houses').select('*').eq('program_id', currentProgramId);
-    const [a, all, h, paid] = await Promise.all([
+    const [a, all, h, paid, av] = await Promise.all([
       isNone ? Promise.resolve({ data: null }) : supabase.from('areas').select('*').eq('id', id).maybeSingle(),
       supabase.from('areas').select('*').eq('program_id', currentProgramId).order('name'),
       (isNone ? houseQ.is('area_id', null) : houseQ.eq('area_id', id)).order('name'),
-      supabase.from('income_entries').select('house_id')
-        .eq('program_id', currentProgramId).not('house_id', 'is', null).is('deleted_at', null),
+      // aggregate (index-only) instead of pulling every transaction to the client
+      supabase.rpc('program_paid_houses', { p_program: currentProgramId }),
+      supabase.rpc('program_member_avatars', { p_program: currentProgramId }),
     ]);
     setArea((a.data ?? null) as Area | null);
     setAreas((all.data ?? []) as Area[]);
     setHouses((h.data ?? []) as House[]);
     setPaidSet(new Set(((paid.data ?? []) as { house_id: string }[]).map((r) => r.house_id)));
+    setAvatars(new Map(((av.data ?? []) as { house_id: string; avatar_url: string }[])
+      .map((r) => [r.house_id, r.avatar_url])));
   };
   useEffect(() => { load(); setLimit(PAGE); /* eslint-disable-next-line */ }, [currentProgramId, id]);
 
@@ -156,7 +160,7 @@ export default function AreaDetail() {
         {list.length === 0 && <Empty />}
         <div className="px-2">
           {list.slice(0, limit).map((h) => (
-            <HouseRow key={h.id} h={h} paid={paidSet.has(h.id)}
+            <HouseRow key={h.id} h={h} paid={paidSet.has(h.id)} avatarUrl={avatars.get(h.id)}
               onClick={() => setEntry({ mode: 'edit', house: h })} />
           ))}
         </div>
