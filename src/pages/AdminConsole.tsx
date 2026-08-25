@@ -153,14 +153,15 @@ export default function AdminConsole() {
       {/* summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
         {[
-          { label: t('admin.tabUsers'), value: profiles.length },
-          { label: t('admin.tabOrgs'), value: orgs.length },
-          { label: t('admin.programs'), value: programs.length },
-          { label: t('admin.members'), value: totalMembers },
+          { label: t('admin.tabUsers'), value: profiles.length, desc: t('admin.usersDesc') },
+          { label: t('admin.tabOrgs'), value: orgs.length, desc: t('admin.orgsDesc') },
+          { label: t('admin.programs'), value: programs.length, desc: t('admin.programsDesc') },
+          { label: t('admin.members'), value: totalMembers, desc: t('admin.membersDesc') },
         ].map((s) => (
           <div key={s.label} className="card p-3 text-center">
             <div className="text-2xl font-black text-brand-800">{s.value}</div>
             <div className="text-[11px] uppercase tracking-wide text-stone-500">{s.label}</div>
+            <div className="text-[10px] text-stone-400 leading-tight mt-0.5">{s.desc}</div>
           </div>
         ))}
       </div>

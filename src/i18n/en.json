@@ -603,6 +603,10 @@
     "tabAdmins": "Admins",
     "programs": "Programs",
     "members": "Members",
+    "usersDesc": "Signed in to the app",
+    "orgsDesc": "Clubs & committees",
+    "programsDesc": "Festivals / years",
+    "membersDesc": "On a committee team",
     "clubs": "Clubs",
     "joined": "Joined",
     "searchUsers": "Search name, email or phone"
