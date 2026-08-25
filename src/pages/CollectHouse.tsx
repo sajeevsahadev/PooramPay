@@ -22,9 +22,14 @@ export default function CollectHouse() {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [receipt, setReceipt] = useState<{ no: number; amount: number } | null>(null);
+
+  // searchable member picker
+  const [memberQuery, setMemberQuery] = useState('');
+  const [memberOpen, setMemberOpen] = useState(false);
+
   const [addHouse, setAddHouse] = useState(false);
   const [newHouse, setNewHouse] = useState({
-    name: '', owner: '', phone: '', email: '',
+    name: '', phone: '', email: '', areaId: '',
     lat: null as number | null, lng: null as number | null,
   });
 
@@ -40,6 +45,24 @@ export default function CollectHouse() {
     () => houses.filter((h) => !areaId || h.area_id === areaId),
     [houses, areaId],
   );
+
+  // members matching the typed search (respecting the area filter)
+  const matches = useMemo(() => {
+    const q = memberQuery.trim().toLowerCase();
+    if (!q) return filteredHouses;
+    return filteredHouses.filter((h) => `${h.name} ${h.owner_name ?? ''}`.toLowerCase().includes(q));
+  }, [filteredHouses, memberQuery]);
+
+  const selectedHouse = houses.find((h) => h.id === houseId) || null;
+  const areaName = (id: string | null | undefined) => areas.find((a) => a.id === id)?.name ?? '—';
+
+  const selectMember = (h: House) => { setHouseId(h.id); setMemberOpen(false); setMemberQuery(''); };
+  const clearMember = () => { setHouseId(''); setMemberQuery(''); };
+  const openAdd = (prefill: string) => {
+    setNewHouse({ name: prefill.trim(), phone: '', email: '', areaId: areaId || '', lat: null, lng: null });
+    setMemberOpen(false);
+    setAddHouse(true);
+  };
 
   const save = async () => {
     const amt = parseFloat(amount);
@@ -60,17 +83,19 @@ export default function CollectHouse() {
         notes: notes || null,
       }).select('receipt_no').single().throwOnError();
       setReceipt({ no: (data as { receipt_no: number }).receipt_no, amount: amt });
-      setAmount(''); setPayer(''); setNotes(''); setHouseId('');
+      setAmount(''); setPayer(''); setNotes(''); clearMember();
       refreshFinance();
     } catch (e) { setErr(friendlyError(e)); }
     setBusy(false);
   };
 
+  const areaRequired = areas.length > 0;
   const saveHouse = async () => {
     if (!newHouse.name.trim()) return;
+    if (areaRequired && !newHouse.areaId) return;
     const { data, error } = await supabase.from('houses').insert({
-      program_id: currentProgramId, area_id: areaId || null,
-      name: newHouse.name.trim(), owner_name: newHouse.owner.trim() || null,
+      program_id: currentProgramId, area_id: newHouse.areaId || null,
+      name: newHouse.name.trim(), owner_name: null,
       phone: newHouse.phone.trim() || null, email: newHouse.email.trim() || null,
       gps_lat: newHouse.lat, gps_lng: newHouse.lng,
     }).select('*').single();
@@ -78,7 +103,7 @@ export default function CollectHouse() {
       setHouses((p) => [...p, data as House]);
       setHouseId((data as House).id);
       setAddHouse(false);
-      setNewHouse({ name: '', owner: '', phone: '', email: '', lat: null, lng: null });
+      setNewHouse({ name: '', phone: '', email: '', areaId: '', lat: null, lng: null });
     } else if (error) { setErr(friendlyError(error)); }
   };
 
@@ -101,39 +126,75 @@ export default function CollectHouse() {
 
       <div className="card">
         <Field label={t('collect.selectArea')}>
-          <select value={areaId} onChange={(e) => { setAreaId(e.target.value); setHouseId(''); }}>
+          <select value={areaId} onChange={(e) => { setAreaId(e.target.value); clearMember(); }}>
             <option value="">{t('common.all')}</option>
             {areas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
         </Field>
+
+        {/* searchable member picker: select existing · add new · or leave blank (walk-in) */}
         <Field label={t('collect.selectUnit', { unit })}>
-          <div className="flex gap-2">
-            <select value={houseId} onChange={(e) => setHouseId(e.target.value)}>
-              <option value="">— {t('common.optional')} —</option>
-              {filteredHouses.map((h) => (
-                <option key={h.id} value={h.id}>{h.name}{h.owner_name ? ` (${h.owner_name})` : ''}</option>
-              ))}
-            </select>
-            <button className="btn-secondary shrink-0 px-3" onClick={() => setAddHouse(true)}>＋</button>
-          </div>
-          {(() => {
-            const h = houses.find((x) => x.id === houseId);
-            if (!h) return null;
-            return (
-              <span className="block text-xs text-stone-500 mt-1">
-                {h.phone && <>📞 <a className="underline" href={`tel:${h.phone}`}>{h.phone}</a>{' '}</>}
-                {h.gps_lat != null && h.gps_lng != null && (
-                  <a className="text-brand-700 underline font-semibold" target="_blank" rel="noreferrer"
-                    href={`https://maps.google.com/?q=${h.gps_lat},${h.gps_lng}`}>
-                    🗺️ {t('setup.openMap')}
-                  </a>
-                )}
-              </span>
-            );
-          })()}
+          {selectedHouse ? (
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2">
+              <div className="min-w-0">
+                <div className="font-semibold truncate">{selectedHouse.name}</div>
+                <div className="text-xs text-stone-500 truncate">
+                  📍 {areaName(selectedHouse.area_id)}
+                  {selectedHouse.phone && <> · 📞 <a className="underline" href={`tel:${selectedHouse.phone}`}>{selectedHouse.phone}</a></>}
+                  {selectedHouse.gps_lat != null && selectedHouse.gps_lng != null && (
+                    <> · <a className="text-brand-700 underline font-semibold" target="_blank" rel="noreferrer"
+                      href={`https://maps.google.com/?q=${selectedHouse.gps_lat},${selectedHouse.gps_lng}`}>🗺️ {t('setup.openMap')}</a></>
+                  )}
+                </div>
+              </div>
+              <button className="text-sm text-brand-700 font-semibold shrink-0" onClick={clearMember}>
+                {t('collect.changeSel')}
+              </button>
+            </div>
+          ) : (
+            <div className="relative">
+              <div className="flex gap-2">
+                <input value={memberQuery} onFocus={() => setMemberOpen(true)}
+                  onChange={(e) => { setMemberQuery(e.target.value); setMemberOpen(true); }}
+                  placeholder={`🔍 ${t('collect.memberSearch', { unit })}`} />
+                <button className="btn-secondary shrink-0 px-3" title={t('collect.addUnit', { unit })}
+                  onClick={() => openAdd(memberQuery)}>＋</button>
+              </div>
+              {memberOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setMemberOpen(false)} />
+                  <div className="absolute left-0 right-0 mt-1 z-20 bg-white border border-stone-200 rounded-lg shadow-lg max-h-64 overflow-auto">
+                    {matches.slice(0, 60).map((h) => (
+                      <button key={h.id} onClick={() => selectMember(h)}
+                        className="w-full text-left px-3 py-2 hover:bg-brand-50 border-b border-stone-50 last:border-0">
+                        <div className="font-medium truncate">{h.name}</div>
+                        <div className="text-xs text-stone-400 truncate">
+                          📍 {areaName(h.area_id)}{h.phone ? ` · ${h.phone}` : ''}
+                        </div>
+                      </button>
+                    ))}
+                    {matches.length === 0 && (
+                      <div className="px-3 py-2 text-sm text-stone-400">{t('collect.noMatch')}</div>
+                    )}
+                    <button onClick={() => openAdd(memberQuery)}
+                      className="w-full text-left px-3 py-2.5 text-brand-700 font-semibold hover:bg-brand-50 sticky bottom-0 bg-white border-t border-stone-100">
+                      {memberQuery.trim() ? t('collect.addNamed', { name: memberQuery.trim() }) : t('collect.orAddNew', { unit })}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+          {!selectedHouse && !memberOpen && (
+            <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-2 py-1.5 mt-1.5">
+              ⚠️ {t('collect.walkInHint', { unit })}
+            </p>
+          )}
         </Field>
-        <Field label={t('collect.payerName')}>
-          <input value={payer} onChange={(e) => setPayer(e.target.value)} />
+
+        <Field label={`${t('collect.payerName')} (${t('common.optional')})`}>
+          <input value={payer} onChange={(e) => setPayer(e.target.value)}
+            placeholder={selectedHouse?.name ?? ''} />
         </Field>
         <Field label={t('common.amount')}>
           <input value={amount} onChange={(e) => setAmount(e.target.value)}
@@ -163,11 +224,20 @@ export default function CollectHouse() {
             <input value={newHouse.name} autoFocus
               onChange={(e) => setNewHouse({ ...newHouse, name: e.target.value })} />
           </Field>
-          <GpsPin lat={newHouse.lat} lng={newHouse.lng} unit={unit}
-            onChange={(lat, lng) => setNewHouse((h) => ({ ...h, lat, lng }))} onError={setErr} />
-          <Field label={t('setup.houseOwner')} hint={t('setup.personHint')}>
-            <input value={newHouse.owner} onChange={(e) => setNewHouse({ ...newHouse, owner: e.target.value })} />
-          </Field>
+
+          {/* Area — highlighted, important: the member must be filed under an area */}
+          {areaRequired && (
+            <div className="rounded-lg border-2 border-brand-300 bg-brand-50 p-3 my-3">
+              <label className="block text-sm font-bold text-brand-800 mb-1">📍 {t('collect.assignArea')} *</label>
+              <select value={newHouse.areaId}
+                onChange={(e) => setNewHouse({ ...newHouse, areaId: e.target.value })}>
+                <option value="">— {t('collect.selectArea')} —</option>
+                {areas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </select>
+              <p className="text-xs text-brand-700/80 mt-1">{t('collect.assignAreaHint', { unit })}</p>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <Field label={`${t('common.phone')} (${t('common.optional')})`}>
               <input type="tel" inputMode="tel" value={newHouse.phone}
@@ -178,7 +248,12 @@ export default function CollectHouse() {
                 onChange={(e) => setNewHouse({ ...newHouse, email: e.target.value })} />
             </Field>
           </div>
-          <button className="btn-primary w-full" disabled={!newHouse.name.trim()} onClick={saveHouse}>
+
+          <GpsPin lat={newHouse.lat} lng={newHouse.lng} unit={unit}
+            onChange={(lat, lng) => setNewHouse((h) => ({ ...h, lat, lng }))} onError={setErr} />
+
+          <button className="btn-primary w-full mt-3"
+            disabled={!newHouse.name.trim() || (areaRequired && !newHouse.areaId)} onClick={saveHouse}>
             {t('common.save')}
           </button>
         </Modal>

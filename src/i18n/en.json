@@ -370,7 +370,15 @@
     "arrears": "Arrears",
     "houseName": "House name",
     "advertiser": "Advertiser",
-    "source": "Source"
+    "source": "Source",
+    "memberSearch": "Search {{unit}} by name…",
+    "changeSel": "Change",
+    "addNamed": "Add “{{name}}”",
+    "orAddNew": "＋ Add new {{unit}}",
+    "noMatch": "No match — add them below to build your register",
+    "walkInHint": "No {{unit}} selected — this will be saved as a walk-in. Search above, or ＋ add a {{unit}} to build your register.",
+    "assignArea": "Assign to an area",
+    "assignAreaHint": "Important — choose the area this {{unit}} belongs to, so it shows in the right register."
   },
   "coupons": {
     "title": "Coupons",
