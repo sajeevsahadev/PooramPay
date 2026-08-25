@@ -12,15 +12,19 @@ export default function More() {
   const [showTour, setShowTour] = useState(false);
 
   const links: { to: string; icon: string; tile: string; label: string; desc?: string; show: boolean }[] = [
+    // money
     { to: '/transactions', icon: '📒', tile: 'tile-cyan', label: t('nav.transactions'), show: can('view_money') },
     { to: '/reports', icon: '📊', tile: 'tile-fuchsia', label: t('nav.reports'), show: true },
+    { to: '/budget', icon: '🎯', tile: 'tile-rose', label: t('nav.budget'), show: isCommitteeAdmin },
     { to: '/coupons', icon: '🎟️', tile: 'tile-violet', label: t('nav.coupons'), show: can('coupons') },
+    // people & places
     { to: '/members', icon: '👥', tile: 'tile-lime', label: t('nav.members'), show: true },
     { to: '/areas', icon: '🗺️', tile: 'tile-amber', label: t('nav.areas'), show: true },
-    { to: '/budget', icon: '🎯', tile: 'tile-rose', label: t('nav.budget'), show: isCommitteeAdmin },
+    // setup & records
     { to: '/setup', icon: '⚙️', tile: 'tile-cyan', label: t('nav.setup'), desc: t('nav.setupDesc'), show: true },
     { to: '/audit', icon: '📜', tile: 'tile-violet', label: t('nav.auditLog'), show: true },
     { to: '/deleted', icon: '🗑️', tile: 'tile-rose', label: t('nav.deletedTx'), show: can('view_money') },
+    // platform admin
     { to: '/admin', icon: '🛡️', tile: 'tile-amber', label: t('nav.admin'), show: isPadmin },
   ].filter((x) => x.show);
 

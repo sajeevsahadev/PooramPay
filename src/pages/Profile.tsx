@@ -165,7 +165,7 @@ export default function Profile() {
         <Field label={t('common.language')}>
           <div className="flex gap-2">
             {[{ code: 'en', label: 'English' }, { code: 'ml', label: 'മലയാളം' }].map((l) => (
-              <button key={l.code} type="button" onClick={() => setLang(l.code)}
+              <button key={l.code} type="button" onClick={() => { setLang(l.code); setLanguage(l.code); }}
                 className={`btn flex-1 ${lang === l.code ? 'bg-brand-700 text-white' : 'bg-surface border border-stone-300'}`}>
                 {l.label}
               </button>

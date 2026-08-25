@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase, fmtINR } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
@@ -26,6 +26,18 @@ export default function CollectHouse() {
   // searchable member picker
   const [memberQuery, setMemberQuery] = useState('');
   const [memberOpen, setMemberOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  // close the picker when tapping anywhere outside it (without blocking that tap,
+  // so the tapped control — e.g. the area dropdown — still responds on the first tap)
+  useEffect(() => {
+    if (!memberOpen) return;
+    const onDown = (e: PointerEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) setMemberOpen(false);
+    };
+    document.addEventListener('pointerdown', onDown);
+    return () => document.removeEventListener('pointerdown', onDown);
+  }, [memberOpen]);
 
   const [addHouse, setAddHouse] = useState(false);
   const [newHouse, setNewHouse] = useState({
@@ -56,7 +68,7 @@ export default function CollectHouse() {
   const selectedHouse = houses.find((h) => h.id === houseId) || null;
   const areaName = (id: string | null | undefined) => areas.find((a) => a.id === id)?.name ?? '—';
 
-  const selectMember = (h: House) => { setHouseId(h.id); setMemberOpen(false); setMemberQuery(''); };
+  const selectMember = (h: House) => { setHouseId(h.id); setMemberOpen(false); setMemberQuery(''); setPayer(''); };
   const clearMember = () => { setHouseId(''); setMemberQuery(''); };
   const openAdd = (prefill: string) => {
     setNewHouse({ name: prefill.trim(), phone: '', email: '', areaId: areaId || '', lat: null, lng: null });
@@ -152,7 +164,7 @@ export default function CollectHouse() {
               </button>
             </div>
           ) : (
-            <div className="relative">
+            <div className="relative" ref={pickerRef}>
               <div className="flex gap-2">
                 <input value={memberQuery} onFocus={() => setMemberOpen(true)}
                   onChange={(e) => { setMemberQuery(e.target.value); setMemberOpen(true); }}
@@ -161,8 +173,6 @@ export default function CollectHouse() {
                   onClick={() => openAdd(memberQuery)}>＋</button>
               </div>
               {memberOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setMemberOpen(false)} />
                   <div className="absolute left-0 right-0 mt-1 z-20 bg-white border border-stone-200 rounded-lg shadow-lg max-h-64 overflow-auto">
                     {matches.slice(0, 60).map((h) => (
                       <button key={h.id} onClick={() => selectMember(h)}
@@ -181,7 +191,6 @@ export default function CollectHouse() {
                       {memberQuery.trim() ? t('collect.addNamed', { name: memberQuery.trim() }) : t('collect.orAddNew', { unit })}
                     </button>
                   </div>
-                </>
               )}
             </div>
           )}
@@ -192,10 +201,12 @@ export default function CollectHouse() {
           )}
         </Field>
 
-        <Field label={`${t('collect.payerName')} (${t('common.optional')})`}>
-          <input value={payer} onChange={(e) => setPayer(e.target.value)}
-            placeholder={selectedHouse?.name ?? ''} />
-        </Field>
+        {/* payer only matters for walk-ins; a chosen member is already the payer */}
+        {!selectedHouse && (
+          <Field label={`${t('collect.payerName')} (${t('common.optional')})`}>
+            <input value={payer} onChange={(e) => setPayer(e.target.value)} />
+          </Field>
+        )}
         <Field label={t('common.amount')}>
           <input value={amount} onChange={(e) => setAmount(e.target.value)}
             type="number" inputMode="decimal" min="1" placeholder="500" className="text-2xl font-bold" />
