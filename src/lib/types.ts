@@ -38,6 +38,11 @@ export interface Profile {
   phone: string | null;
   language: string;
   is_platform_admin: boolean;
+  avatar_url: string | null;
+  description: string | null;
+  date_of_birth: string | null;
+  gender: 'male' | 'female' | 'other' | null;
+  country: string | null;
 }
 
 /** Best name to show for a member to other users. */

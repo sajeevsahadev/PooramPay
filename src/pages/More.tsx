@@ -32,9 +32,13 @@ export default function More() {
   return (
     <div className="max-w-lg mx-auto">
       <Link to="/profile" className="card mb-4 flex items-center gap-3 hover:bg-brand-50">
-        <div className="w-12 h-12 rounded-full bg-brand-700 text-white flex items-center justify-center text-xl font-bold shrink-0">
-          {((profile?.nickname || profile?.full_name) ?? '?')[0]}
-        </div>
+        {profile?.avatar_url ? (
+          <img src={profile.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover shrink-0 border border-stone-200" />
+        ) : (
+          <div className="w-12 h-12 rounded-full bg-brand-700 text-white flex items-center justify-center text-xl font-bold shrink-0">
+            {((profile?.nickname || profile?.full_name) ?? '?')[0]}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <div className="font-bold truncate">{profile?.nickname || profile?.full_name}</div>
           <div className="text-xs text-stone-500 truncate">{profile?.email} · {profile?.phone}</div>
