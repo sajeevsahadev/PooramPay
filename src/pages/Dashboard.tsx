@@ -29,9 +29,8 @@ export default function Dashboard() {
   // non-finance members: show their OWN collection (org totals stay hidden)
   useEffect(() => {
     if (!currentProgramId || can('view_money')) return;
-    supabase.from('income_entries').select('amount')
-      .eq('program_id', currentProgramId).eq('collected_by', session!.user.id).is('deleted_at', null)
-      .then(({ data }) => setMyCollected((data ?? []).reduce((s, r) => s + Number(r.amount), 0)));
+    supabase.rpc('program_my_collected', { p_program: currentProgramId, p_user: session!.user.id })
+      .then(({ data }) => setMyCollected(Number(data ?? 0)));
     // eslint-disable-next-line
   }, [currentProgramId]);
   const [budgetExpense, setBudgetExpense] = useState(0);
