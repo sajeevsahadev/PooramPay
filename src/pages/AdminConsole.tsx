@@ -8,7 +8,7 @@ import AccessLog from './AccessLog';
 
 interface Profile {
   id: string; full_name: string | null; nickname: string | null;
-  phone: string | null; email: string; is_platform_admin: boolean;
+  phone: string | null; email: string; is_platform_admin: boolean; created_at: string;
 }
 interface Access {
   profile_id: string | null; device: string | null; ip: string | null;
@@ -22,7 +22,7 @@ type Tab = 'users' | 'orgs' | 'access' | 'admins';
 
 /** Platform administrator: users, organizations, access log, admin management. */
 export default function AdminConsole() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isPadmin, refresh } = useApp();
   const [tab, setTab] = useState<Tab>('users');
 
@@ -49,7 +49,7 @@ export default function AdminConsole() {
       supabase.from('programs').select('*').order('year', { ascending: false }),
       supabase.from('v_program_finance').select('program_id, income_total, expense_total'),
       supabase.from('platform_admin_emails').select('email'),
-      supabase.from('profiles').select('id, full_name, nickname, phone, email, is_platform_admin'),
+      supabase.from('profiles').select('id, full_name, nickname, phone, email, is_platform_admin, created_at'),
       supabase.from('access_log').select('profile_id, device, ip, city, region, country, created_at')
         .order('created_at', { ascending: false }).limit(3000),
       supabase.from('committee_members').select('profile_id, email, committees(organization_id, organizations(name))'),
@@ -97,7 +97,8 @@ export default function AdminConsole() {
     const list = s
       ? profiles.filter((p) => `${p.full_name ?? ''} ${p.nickname ?? ''} ${p.email} ${p.phone ?? ''}`.toLowerCase().includes(s))
       : profiles;
-    return [...list].sort((a, b) => displayName(a).localeCompare(displayName(b)));
+    // newest sign-ups first
+    return [...list].sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
   }, [profiles, uq]);
 
   if (!isPadmin) return <Empty />;
@@ -184,7 +185,7 @@ export default function AdminConsole() {
           <input value={uq} onChange={(e) => setUq(e.target.value)}
             placeholder={`🔍 ${t('admin.searchUsers')}`} className="mb-3" />
           <div className="card p-0 overflow-x-auto">
-            <table className="w-full text-sm min-w-[820px]">
+            <table className="w-full text-sm min-w-[960px]">
               <thead>
                 <tr className="text-left text-xs text-stone-500 border-b border-stone-200">
                   <th className="p-2">{t('access.user')}</th>
@@ -192,6 +193,7 @@ export default function AdminConsole() {
                   <th className="p-2">{t('access.device')}</th>
                   <th className="p-2">{t('access.location')}</th>
                   <th className="p-2">{t('admin.clubs')}</th>
+                  <th className="p-2 whitespace-nowrap">{t('admin.joined')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -212,6 +214,12 @@ export default function AdminConsole() {
                       <td className="p-2">{locOf(a)}</td>
                       <td className="p-2">
                         {clubs.length ? clubs.map((c) => <span key={c} className="chip-gray mr-1 mb-1 inline-block">{c}</span>) : '—'}
+                      </td>
+                      <td className="p-2 whitespace-nowrap text-xs text-stone-500">
+                        {p.created_at
+                          ? new Date(p.created_at).toLocaleString(i18n.language === 'ml' ? 'ml-IN' : 'en-IN',
+                              { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                          : '—'}
                       </td>
                     </tr>
                   );

@@ -42,7 +42,11 @@
     "actions": "Actions",
     "download": "Download",
     "print": "Print",
-    "more": "more"
+    "more": "more",
+    "prev": "Previous",
+    "next": "Next",
+    "perPage": "Per page",
+    "showing": "{{from}}–{{to}} of {{total}}"
   },
   "units": {
     "house": { "one": "House", "many": "Houses" },
@@ -119,7 +123,8 @@
     "ip": "IP address",
     "device": "Device",
     "location": "Location",
-    "club": "Club"
+    "club": "Club",
+    "search": "Search any column — name, email, phone, IP, device, place…"
   },
   "auth": {
     "signInWithGoogle": "Sign in with Google",
@@ -583,6 +588,7 @@
     "programs": "Programs",
     "members": "Members",
     "clubs": "Clubs",
+    "joined": "Joined",
     "searchUsers": "Search name, email or phone"
   }
 }
