@@ -168,11 +168,11 @@ export default function AdminConsole() {
         {t('dashboard.collected')}: <b className="money text-stone-700">{fmtINR(totalIncome)}</b>
       </div>
 
-      {/* tabs */}
-      <div className="flex gap-2 mb-4 overflow-x-auto">
+      {/* tabs — 2×2 on mobile, single row on wider screens (no horizontal scroll) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
         {tabs.map((x) => (
           <button key={x.id} onClick={() => setTab(x.id)}
-            className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${
+            className={`px-3 py-2 rounded-lg text-sm text-center truncate ${
               tab === x.id ? 'bg-brand-700 text-white font-semibold' : 'bg-surface border border-stone-300'}`}>
             {x.label}
           </button>
