@@ -1,5 +1,12 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "rewrites": [
+    { "source": "/c/:slug", "destination": "/api/committee?slug=:slug" },
+    { "source": "/directory", "destination": "/api/directory" },
+    { "source": "/directory/:district", "destination": "/api/directory?district=:district" },
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/robots.txt", "destination": "/api/robots" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -11,7 +18,7 @@
         { "key": "Permissions-Policy", "value": "geolocation=(self), camera=(self), microphone=(), payment=()" },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co https://*.googleusercontent.com; connect-src 'self' https://tovxkjmbetamizlijtcr.supabase.co wss://tovxkjmbetamizlijtcr.supabase.co https://ipwho.is; font-src 'self' data:; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'"
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://*.supabase.co https://*.googleusercontent.com; connect-src 'self' https://tovxkjmbetamizlijtcr.supabase.co wss://tovxkjmbetamizlijtcr.supabase.co https://ipwho.is; font-src 'self' data: https://fonts.gstatic.com; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'"
         }
       ]
     }
