@@ -39,7 +39,7 @@ export function buildCommitteeHtml(data, slug, lang = 'en') {
     const pubDate = p.published_at ? new Date(p.published_at).toLocaleDateString(lang === 'ml' ? 'ml-IN' : 'en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
     return `<div class="card">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap">
-        <h2>${esc(p.name)} ${esc(p.year)}</h2>
+        <h2>${esc(String(p.name).includes(String(p.year)) ? p.name : `${p.name} ${p.year}`)}</h2>
         ${pubDate ? `<span class="muted" style="font-size:12px">${t.published}: ${esc(pubDate)}</span>` : ''}
       </div>
       ${p.group_photo_url ? `<img class="grp" src="${esc(p.group_photo_url)}" alt="${esc(t.conductedBy)}" loading="lazy" style="margin-top:12px">` : ''}

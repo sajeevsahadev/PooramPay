@@ -311,6 +311,23 @@
     "countryHint": "Detected from your connection — you can change it.",
     "detecting": "Detecting…"
   },
+  "public": {
+    "title": "Public page",
+    "intro": "Show your published accounts on the web so people can find your committee on Google.",
+    "on": "Your page is live",
+    "toggleOn": "Publish public page",
+    "toggleOff": "Turn off",
+    "needPublish": "Also sign & publish your final accounts above — the page shows them once published.",
+    "url": "Your link",
+    "copy": "Copy",
+    "copied": "Copied",
+    "share": "Share on WhatsApp",
+    "shareText": "See our committee's transparent accounts on PooramPay:",
+    "cover": "Cover photo",
+    "committeePhoto": "Committee photo",
+    "addPhoto": "Add photo",
+    "change": "Change"
+  },
   "home": {
     "morning": "Good morning",
     "afternoon": "Good afternoon",

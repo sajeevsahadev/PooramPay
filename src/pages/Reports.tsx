@@ -5,6 +5,7 @@ import { useApp } from '../state/AppContext';
 import { Empty, friendlyError } from '../components/ui';
 import { incomeTypeLabel, useUnits } from '../lib/units';
 import { displayName, type BudgetItem, type CouponBook, type ExpenseHead } from '../lib/types';
+import PublicPagePanel from '../components/PublicPagePanel';
 
 type Tab = 'pnl' | 'cashbook' | 'budget' | 'coupon';
 const INCOME_TYPES = ['house', 'coupon', 'subscription', 'interest', 'ad_brochure', 'ad_stage', 'donation'];
@@ -303,6 +304,8 @@ export default function Reports() {
             )}
             <Signatures />
           </div>
+
+          <PublicPagePanel />
         </>
       )}
 

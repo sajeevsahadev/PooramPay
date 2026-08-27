@@ -42,6 +42,33 @@ export async function compressImage(file: File, max = 320): Promise<string> {
   return out;
 }
 
+/** Compress to a landscape JPEG Blob (keeps aspect), for cover/committee photos. */
+async function compressLandscape(file: File, maxW = 1100): Promise<Blob> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, maxW / bitmap.width);
+  const w = Math.round(bitmap.width * scale);
+  const h = Math.round(bitmap.height * scale);
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('canvas unsupported');
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  bitmap.close?.();
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('encode failed'))), 'image/jpeg', 0.82);
+  });
+}
+
+/** Compress and upload a public-page photo (cover / committee) to the public
+ *  'logos' bucket under the org's folder; returns its public URL. */
+export async function uploadPublicPhoto(orgId: string, file: File, kind: 'cover' | 'group'): Promise<string> {
+  const blob = await compressLandscape(file);
+  const path = `${orgId}/${kind}-${Date.now()}.jpg`;
+  const { error } = await supabase.storage.from('logos').upload(path, blob, { contentType: 'image/jpeg' });
+  if (error) throw error;
+  return supabase.storage.from('logos').getPublicUrl(path).data.publicUrl;
+}
+
 export function fmtINR(amount: number | null | undefined): string {
   return '₹' + new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(amount ?? 0);
 }

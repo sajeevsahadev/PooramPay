@@ -74,6 +74,8 @@ export interface Organization {
   district: string | null;
   place: string | null;
   logo_url: string | null;
+  slug: string | null;
+  cover_url: string | null;
   created_by: string;
 }
 
@@ -97,6 +99,8 @@ export interface Program {
   total_weeks: number;
   unit_label: UnitLabel;
   is_demo?: boolean;
+  is_public?: boolean;
+  group_photo_url?: string | null;
   results_published: boolean;
   results_published_at: string | null;
   results_snapshot: {
