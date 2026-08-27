@@ -196,6 +196,18 @@
     "how3Body": "Submit expenses with a photo of the bill. The treasurer approves, then it is paid and recorded. Not a rupee moves without approval.",
     "how4Title": "Publish the accounts",
     "how4Body": "Cash book, budget and profit & loss anytime. At the end, the committee digitally signs and publishes the final accounts for every member to see.",
+    "journeyTitle": "One festival season, start to finish",
+    "journeySub": "Here's how a committee runs the whole year with PooramPay.",
+    "journey": [
+      { "t": "It starts with a worry", "b": "Who collected how much? Where did the money go? A shoebox of receipts and a notebook that goes missing. PooramPay replaces all of it with one shared book." },
+      { "t": "Set up in two minutes", "b": "Create your club and committee, add the President, Secretary, Treasurer and collectors, and choose exactly who can see the money." },
+      { "t": "Collect every rupee", "b": "House-to-house, prize coupon books, weekly subscriptions, donations, ads — each entry gets an automatic receipt number the moment it's saved." },
+      { "t": "Nothing spent without approval", "b": "A volunteer submits an expense with a photo of the bill; the treasurer approves; only then is it paid and recorded. No quiet spending." },
+      { "t": "Cash that always balances", "b": "Hand cash over with two-side confirmation, and the cash book stays right to the rupee — no more end-of-season mysteries." },
+      { "t": "See the whole picture", "b": "A live dashboard, budget-vs-actual and profit & loss — so the committee always knows where it stands, in plain numbers." },
+      { "t": "Sign, publish, be found", "b": "At the end the committee digitally signs the final accounts. Publish them to your own page at poorampay.com/c/your-club — transparent, shareable, found on Google." }
+    ],
+    "directoryCta": "See committees already on PooramPay",
     "featuresTitle": "Everything your committee needs",
     "f1": "House-to-house & area collections",
     "f2": "Prize coupon books — issue, sell, settle",

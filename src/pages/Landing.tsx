@@ -70,12 +70,8 @@ export default function Landing() {
   const signIn = () =>
     supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
 
-  const steps = [
-    { icon: '🏛️', tint: 'bg-brand-50 border-brand-100', title: t('landing.how1Title'), body: t('landing.how1Body') },
-    { icon: '💰', tint: 'bg-amber-50 border-amber-100', title: t('landing.how2Title'), body: t('landing.how2Body') },
-    { icon: '🧾', tint: 'bg-sky-50 border-sky-100', title: t('landing.how3Title'), body: t('landing.how3Body') },
-    { icon: '📊', tint: 'bg-green-50 border-green-100', title: t('landing.how4Title'), body: t('landing.how4Body') },
-  ];
+  const journey = t('landing.journey', { returnObjects: true }) as { t: string; b: string }[];
+  const journeyIcons = ['😟', '🏛️', '💰', '🧾', '🤝', '📊', '🌐'];
   const features = ['f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8'].map((k) => t(`landing.${k}`));
 
   return (
@@ -129,19 +125,33 @@ export default function Landing() {
           <p className="font-semibold text-brand-800">{t('landing.storySolve')}</p>
         </section>
 
-        {/* how it works */}
+        {/* storytelling journey — the whole season, feature by feature */}
         <section>
-          <h2 className="text-2xl font-black text-center mb-6">{t('landing.howTitle')}</h2>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {steps.map((s, i) => (
-              <div key={i} className="card flex gap-3">
-                <div className={`w-12 h-12 shrink-0 rounded-full border flex items-center justify-center text-2xl ${s.tint}`}>{s.icon}</div>
-                <div>
-                  <div className="font-bold text-sm mb-0.5"><span className="text-brand-600">{i + 1}.</span> {s.title}</div>
-                  <div className="text-sm text-stone-600 leading-snug">{s.body}</div>
+          <h2 className="text-2xl font-black text-center mb-1">{t('landing.journeyTitle')}</h2>
+          <p className="text-center text-stone-500 mb-7">{t('landing.journeySub')}</p>
+          <div className="relative">
+            <div className="absolute left-[26px] top-3 bottom-3 w-0.5 bg-gradient-to-b from-brand-200 via-brand-200 to-transparent" aria-hidden="true" />
+            <div className="space-y-4">
+              {journey.map((c, i) => (
+                <div key={i} className="relative flex gap-4">
+                  <div className="relative z-10 w-[54px] h-[54px] shrink-0 rounded-2xl bg-white border-2 border-brand-100 shadow-sm flex items-center justify-center text-2xl">
+                    {journeyIcons[i] ?? '•'}
+                  </div>
+                  <div className="card flex-1">
+                    <div className="text-[11px] font-bold text-brand-500 uppercase tracking-wide mb-0.5">
+                      {i + 1} / {journey.length}
+                    </div>
+                    <div className="font-bold mb-0.5">{c.t}</div>
+                    <div className="text-sm text-stone-600 leading-snug">{c.b}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+          <div className="text-center mt-6">
+            <a href="/directory" className="text-brand-700 font-semibold underline underline-offset-2">
+              {t('landing.directoryCta')} ›
+            </a>
           </div>
         </section>
 
