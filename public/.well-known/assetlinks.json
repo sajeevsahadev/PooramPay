@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.poorampay.app",
+      "sha256_cert_fingerprints": [
+        "59:D0:45:E4:C6:09:42:45:8F:34:37:A9:83:73:A2:4C:71:E9:E7:36:5B:2E:D7:CF:41:42:9E:65:42:61:55:F4"
+      ]
+    }
+  }
+]
