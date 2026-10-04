@@ -83,7 +83,6 @@ export default function App() {
         <Route path="/members" element={<Members />} />
         <Route path="/areas" element={<Areas />} />
         <Route path="/areas/:id" element={<AreaDetail />} />
-        <Route path="/nearby" element={<Nearby />} />
         <Route path="/budget" element={<Budget />} />
         <Route path="/audit" element={<AuditLog />} />
         <Route path="/deleted" element={<DeletedTx />} />

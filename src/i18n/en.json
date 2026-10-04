@@ -612,6 +612,8 @@
     "clubLocation": "Club location (optional)",
     "clubLocationHint": "Pin it so nearby people can find your club.",
     "clubUnit": "club",
+    "discoverable": "Let people find & join this club",
+    "discoverableHint": "When on, your club appears in “Find clubs near you”. Turn off to stay private.",
     "gpsAttached": "Location pinned",
     "gpsRepin": "Re-pin location",
     "gpsLocating": "Getting location…",

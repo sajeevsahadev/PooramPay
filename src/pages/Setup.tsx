@@ -61,6 +61,13 @@ export default function Setup() {
   };
   useEffect(() => { load(); }, []);
 
+  const toggleListed = async (org: Organization) => {
+    try {
+      await supabase.rpc('set_org_listed', { p_org: org.id, p_is_public: !(org.is_public ?? true) }).throwOnError();
+      await Promise.all([load(), refresh()]);
+    } catch (e) { setErr(friendlyError(e)); }
+  };
+
   const saveCommittee = async () => {
     setBusy(true); setErr(null);
     try {
@@ -200,6 +207,16 @@ export default function Setup() {
               </div>
             )}
           </div>
+          {canManageOrg(org) && (
+            <label className="flex items-center justify-between gap-3 bg-stone-50 rounded-lg px-3 py-2 mb-1 cursor-pointer">
+              <span className="min-w-0">
+                <span className="text-sm font-medium">📍 {t('setup.discoverable')}</span>
+                <span className="block text-xs text-stone-500">{t('setup.discoverableHint')}</span>
+              </span>
+              <input type="checkbox" className="w-5 h-5 min-h-0 shrink-0" checked={org.is_public ?? true}
+                onChange={() => toggleListed(org)} />
+            </label>
+          )}
           {committees.filter((c) => c.organization_id === org.id).map((c) => (
             <div key={c.id} className="border-t border-stone-100 pt-2 mt-2">
               <div className="flex justify-between items-center gap-2">
