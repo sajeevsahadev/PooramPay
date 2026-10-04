@@ -5,6 +5,11 @@ import { useApp } from '../state/AppContext';
 import { Field, ErrorNote, friendlyError, Modal, Empty } from '../components/ui';
 import { displayName, TIERS, type CommitteeMember, type CommitteePosition, type Tier } from '../lib/types';
 
+interface PendingReq {
+  request_id: string; committee_id: string; org_name: string; name: string;
+  email: string; avatar_url: string | null; message: string | null; created_at: string;
+}
+
 /** Small colored badge per access tier. */
 function TierBadge({ tier }: { tier: Tier }) {
   const { t } = useTranslation();
@@ -34,6 +39,8 @@ export default function Members() {
 
   const [members, setMembers] = useState<CommitteeMember[]>([]);
   const [positions, setPositions] = useState<CommitteePosition[]>([]);
+  const [pending, setPending] = useState<PendingReq[]>([]);
+  const [approvePos, setApprovePos] = useState<Record<string, string>>({});
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
@@ -44,15 +51,33 @@ export default function Members() {
   const positionById = (id: string | null) => positions.find((p) => p.id === id) ?? null;
 
   const load = async () => {
-    if (!committeeId) { setMembers([]); setPositions([]); return; }
-    const [{ data: pos }, { data: mem }] = await Promise.all([
+    if (!committeeId) { setMembers([]); setPositions([]); setPending([]); return; }
+    const [{ data: pos }, { data: mem }, { data: pend }] = await Promise.all([
       supabase.from('committee_positions').select('*')
         .eq('committee_id', committeeId).order('sort_order').order('created_at'),
       supabase.from('committee_members').select('*, profiles(nickname, full_name)')
         .eq('committee_id', committeeId).order('created_at'),
+      isCommitteeAdmin
+        ? supabase.rpc('pending_join_requests', { p_committee: committeeId })
+        : Promise.resolve({ data: [] }),
     ]);
     setPositions((pos ?? []) as CommitteePosition[]);
     setMembers((mem ?? []) as CommitteeMember[]);
+    setPending((pend ?? []) as PendingReq[]);
+  };
+
+  const approve = async (reqId: string) => {
+    try {
+      await supabase.rpc('approve_join_request',
+        { p_request: reqId, p_position_id: approvePos[reqId] || null }).throwOnError();
+      await Promise.all([load(), refresh()]);
+    } catch (e) { setErr(friendlyError(e)); }
+  };
+  const reject = async (reqId: string) => {
+    try {
+      await supabase.rpc('reject_join_request', { p_request: reqId }).throwOnError();
+      await load();
+    } catch (e) { setErr(friendlyError(e)); }
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [committeeId]);
 
@@ -136,6 +161,46 @@ export default function Members() {
       </div>
       <p className="text-xs text-stone-500 mb-4">{t('members.scopeNote')}</p>
       <ErrorNote msg={err} />
+
+      {/* Pending join requests — committee admin approves with a role */}
+      {isCommitteeAdmin && pending.length > 0 && (
+        <div className="card mb-4 border-brand-200 bg-brand-50/60">
+          <div className="font-bold mb-1">🙋 {t('members.joinRequests')} ({pending.length})</div>
+          <p className="text-xs text-stone-500 mb-3">{t('members.joinRequestsHint')}</p>
+          <div className="space-y-3">
+            {pending.map((r) => (
+              <div key={r.request_id} className="rounded-xl bg-white border border-stone-200 p-3">
+                <div className="flex items-center gap-2.5 mb-2">
+                  {r.avatar_url
+                    ? <img src={r.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover border border-stone-200" />
+                    : <div className="w-9 h-9 rounded-full bg-brand-700 text-white grid place-items-center text-sm font-bold">{(r.name || '?')[0]?.toUpperCase()}</div>}
+                  <div className="min-w-0">
+                    <div className="font-semibold truncate">{r.name}</div>
+                    <div className="text-xs text-stone-400 truncate">{r.email}</div>
+                  </div>
+                </div>
+                {r.message && <div className="text-xs text-stone-500 mb-2 italic">“{r.message}”</div>}
+                <div className="flex items-center gap-2">
+                  <select className="text-sm flex-1" value={approvePos[r.request_id] ?? ''}
+                    onChange={(e) => setApprovePos((p) => ({ ...p, [r.request_id]: e.target.value }))}>
+                    <option value="">{t('members.chooseRole')}</option>
+                    {positions.map((p) => (
+                      <option key={p.id} value={p.id}>{p.label} · {t(`tiers.${p.tier}.label`)}</option>
+                    ))}
+                  </select>
+                  <button className="btn-primary text-sm px-3 py-1.5" onClick={() => approve(r.request_id)}>
+                    ✓ {t('members.approve')}
+                  </button>
+                  <button className="btn-secondary text-sm px-3 py-1.5 text-red-600" onClick={() => reject(r.request_id)}>
+                    {t('members.reject')}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {members.length === 0 && <Empty />}
 
       <div className="space-y-2">

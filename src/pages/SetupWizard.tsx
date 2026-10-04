@@ -5,6 +5,7 @@ import { supabase, uploadOrgLogo } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { Field, ErrorNote, friendlyError, OrgAvatar } from '../components/ui';
 import { AmbientScene } from '../components/PageDecor';
+import GpsPin from '../components/GpsPin';
 import { randSeed } from '../lib/decor';
 import { COUNTRIES, statesOf, districtsOf } from '../lib/geo';
 import { TIERS, type CommitteeMember, type CommitteePosition, type Tier } from '../lib/types';
@@ -44,6 +45,7 @@ export default function SetupWizard() {
   // form state
   const [orgForm, setOrgForm] = useState({
     name: '', type: 'cultural', country: 'India', state: 'Kerala', district: 'Thrissur', place: '',
+    lat: null as number | null, lng: null as number | null,
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const logoPreview = logoFile ? URL.createObjectURL(logoFile) : null;
@@ -60,6 +62,7 @@ export default function SetupWizard() {
         name: orgForm.name.trim(), org_type: orgForm.type,
         country: orgForm.country.trim() || null, state: orgForm.state.trim() || null,
         district: orgForm.district.trim() || null, place: orgForm.place.trim() || null,
+        gps_lat: orgForm.lat, gps_lng: orgForm.lng,
         created_by: session!.user.id,
       }).select('id').single().throwOnError();
       const id = (data as { id: string }).id;
@@ -192,6 +195,10 @@ export default function SetupWizard() {
                 <input value={orgForm.place} onChange={(e) => setOrgForm({ ...orgForm, place: e.target.value })} />
               </Field>
             </div>
+            <Field label={`📍 ${t('setup.clubLocation')}`} hint={t('setup.clubLocationHint')}>
+              <GpsPin lat={orgForm.lat} lng={orgForm.lng} unit={t('setup.clubUnit')}
+                onChange={(lat, lng) => setOrgForm((f) => ({ ...f, lat, lng }))} onError={setErr} />
+            </Field>
             <button className="btn-primary w-full" disabled={busy || !orgForm.name.trim()} onClick={createOrg}>
               {t('wizard.createOrgContinue')}
             </button>

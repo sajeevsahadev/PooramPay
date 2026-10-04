@@ -151,7 +151,25 @@
   },
   "members": {
     "noCommittee": "Select a committee program first to manage its team.",
-    "scopeNote": "People added here can access every program under this committee."
+    "scopeNote": "People added here can access every program under this committee.",
+    "joinRequests": "Join requests",
+    "joinRequestsHint": "People who asked to join. Pick a role, then approve.",
+    "chooseRole": "Choose a role…",
+    "approve": "Approve",
+    "reject": "Reject"
+  },
+  "nearby": {
+    "findNear": "Near me",
+    "locating": "Locating…",
+    "nearest": "Nearest clubs",
+    "away": "{{km}} km away",
+    "join": "Request to join",
+    "requested": "Requested",
+    "member": "Member",
+    "approved": "Joined",
+    "requestSent": "Request sent — the club admin will review and add you.",
+    "locationOff": "Couldn't get your location. You can still search by name.",
+    "joinHint": "Find your club and request to join. The committee admin approves and sets your role."
   },
   "sort": {
     "name": "Name (A–Z)",
@@ -591,6 +609,9 @@
     "addedCount": "Added: {{count}}",
     "pinGps": "Pin GPS Location",
     "gpsHelp": "Tap while standing at the {{unit}} to save its exact location for easy follow-up.",
+    "clubLocation": "Club location (optional)",
+    "clubLocationHint": "Pin it so nearby people can find your club.",
+    "clubUnit": "club",
     "gpsAttached": "Location pinned",
     "gpsRepin": "Re-pin location",
     "gpsLocating": "Getting location…",
