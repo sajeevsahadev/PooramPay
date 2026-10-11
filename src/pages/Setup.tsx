@@ -68,6 +68,17 @@ export default function Setup() {
     } catch (e) { setErr(friendlyError(e)); }
   };
 
+  const [upiDraft, setUpiDraft] = useState<Record<string, string>>({});
+  const saveUpi = async (org: Organization) => {
+    try {
+      await supabase.rpc('set_org_upi', {
+        p_org: org.id, p_upi_id: upiDraft[org.id] ?? org.upi_id ?? '', p_upi_name: org.upi_name ?? null,
+      }).throwOnError();
+      setCopiedMsg(t('common.saved')); setTimeout(() => setCopiedMsg(null), 1500);
+      await Promise.all([load(), refresh()]);
+    } catch (e) { setErr(friendlyError(e)); }
+  };
+
   const saveCommittee = async () => {
     setBusy(true); setErr(null);
     try {
@@ -216,6 +227,18 @@ export default function Setup() {
               <input type="checkbox" className="w-5 h-5 min-h-0 shrink-0" checked={org.is_public ?? true}
                 onChange={() => toggleListed(org)} />
             </label>
+          )}
+          {canManageOrg(org) && (
+            <div className="bg-stone-50 rounded-lg px-3 py-2 mb-1">
+              <div className="text-sm font-medium mb-1">💳 {t('setup.upiId')}</div>
+              <div className="flex items-center gap-2">
+                <input className="flex-1 text-sm" placeholder="example@upi" inputMode="email"
+                  defaultValue={org.upi_id ?? ''}
+                  onChange={(e) => setUpiDraft((d) => ({ ...d, [org.id]: e.target.value }))} />
+                <button className="btn-secondary text-xs px-3 py-1.5" onClick={() => saveUpi(org)}>{t('common.save')}</button>
+              </div>
+              <div className="text-xs text-stone-500 mt-1">{t('setup.upiHint')}</div>
+            </div>
           )}
           {committees.filter((c) => c.organization_id === org.id).map((c) => (
             <div key={c.id} className="border-t border-stone-100 pt-2 mt-2">

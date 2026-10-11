@@ -77,6 +77,8 @@ export interface Organization {
   slug: string | null;
   cover_url: string | null;
   is_public?: boolean;
+  upi_id?: string | null;
+  upi_name?: string | null;
   created_by: string;
 }
 

@@ -5,6 +5,34 @@ paste into Google Play Console (keep each language ≤ 500 characters).
 
 ---
 
+## v1.2 — 2026-10-11
+
+**Highlights**
+- 💳 **UPI collections** — committees add their **UPI ID** (Setup → each club).
+  On the collection screen, a **"Pay via UPI"** button opens GPay/PhonePe
+  pre-filled with the amount, and records the entry as UPI.
+- 🧾 **WhatsApp receipts** — after recording a payment, tap **"Share receipt on
+  WhatsApp"** to send the payer a clean receipt (club, receipt no, amount, date,
+  thank-you) — bilingual, carrying the PooramPay link.
+
+**Play — What's new (English)**
+```
+• Collect by UPI — add your committee's UPI ID and take payments via GPay/PhonePe.
+• Share a receipt on WhatsApp instantly after every collection.
+• Plus the earlier "find & join a club" and public/private club options.
+Thanks for testing PooramPay!
+```
+
+**Play — What's new (Malayalam)**
+```
+• UPI വഴി പിരിവ് — കമ്മിറ്റിയുടെ UPI ID ചേർത്ത് GPay/PhonePe വഴി പണം സ്വീകരിക്കൂ.
+• ഓരോ പിരിവിനു ശേഷവും WhatsApp-ൽ രസീത് ഉടൻ പങ്കിടൂ.
+• കൂടാതെ "ക്ലബ്ബ് കണ്ടെത്തി ചേരൽ", പൊതു/സ്വകാര്യ ഓപ്ഷനുകളും.
+PooramPay പരീക്ഷിച്ചതിന് നന്ദി!
+```
+
+---
+
 ## v1.1 — 2026-10-04 (closed testing · version code 2)
 
 **Highlights**

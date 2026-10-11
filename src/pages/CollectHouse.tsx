@@ -5,11 +5,13 @@ import { useApp } from '../state/AppContext';
 import { Field, ErrorNote, friendlyError, Modal } from '../components/ui';
 import GpsPin from '../components/GpsPin';
 import { useUnits } from '../lib/units';
+import { upiLink, receiptText, whatsappShare, SITE } from '../lib/upi';
 import type { Area, House } from '../lib/types';
 
 export default function CollectHouse() {
-  const { t } = useTranslation();
-  const { currentProgramId, session, refreshFinance } = useApp();
+  const { t, i18n } = useTranslation();
+  const { currentProgramId, currentProgram, session, refreshFinance } = useApp();
+  const org = currentProgram?.committees?.organizations;
   const { unit, label } = useUnits();
   const [areas, setAreas] = useState<Area[]>([]);
   const [houses, setHouses] = useState<House[]>([]);
@@ -21,7 +23,7 @@ export default function CollectHouse() {
   const [notes, setNotes] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [receipt, setReceipt] = useState<{ no: number; amount: number } | null>(null);
+  const [receipt, setReceipt] = useState<{ no: number; amount: number; payer: string | null; club: string } | null>(null);
 
   // searchable member picker
   const [memberQuery, setMemberQuery] = useState('');
@@ -82,6 +84,7 @@ export default function CollectHouse() {
     setBusy(true); setErr(null);
     try {
       const house = houses.find((h) => h.id === houseId);
+      const payerName = payer || house?.owner_name || house?.name || null;
       const { data } = await supabase.from('income_entries').insert({
         program_id: currentProgramId,
         entry_type: 'house',
@@ -89,12 +92,13 @@ export default function CollectHouse() {
         mode,
         area_id: areaId || house?.area_id || null,
         house_id: houseId || null,
-        payer_name: payer || house?.owner_name || house?.name || null,
+        payer_name: payerName,
         collected_by: session!.user.id,
         created_by: session!.user.id,
         notes: notes || null,
       }).select('receipt_no').single().throwOnError();
-      setReceipt({ no: (data as { receipt_no: number }).receipt_no, amount: amt });
+      setReceipt({ no: (data as { receipt_no: number }).receipt_no, amount: amt,
+        payer: payerName, club: org?.name ?? t('app.name') });
       setAmount(''); setPayer(''); setNotes(''); clearMember();
       refreshFinance();
     } catch (e) { setErr(friendlyError(e)); }
@@ -131,8 +135,17 @@ export default function CollectHouse() {
           <div className="text-green-800 font-bold text-lg">✓ {t('collect.paymentSaved')}</div>
           <div className="text-sm text-stone-600 mt-1">
             {t('collect.receiptNo')}: <b>#{receipt.no}</b> · <b className="money">{fmtINR(receipt.amount)}</b>
+            {receipt.payer && <> · {receipt.payer}</>}
           </div>
-          <button className="btn-secondary mt-3 w-full" onClick={() => setReceipt(null)}>{t('common.done')}</button>
+          <a href={whatsappShare(receiptText(i18n.language, {
+            club: receipt.club, receiptNo: receipt.no, payer: receipt.payer,
+            amount: receipt.amount, date: new Date().toLocaleDateString(i18n.language === 'ml' ? 'ml-IN' : 'en-IN'),
+            link: SITE,
+          }))} target="_blank" rel="noreferrer"
+            className="btn w-full mt-3" style={{ background: '#25D366', color: '#fff' }}>
+            ↗ {t('collect.shareReceipt')}
+          </a>
+          <button className="btn-secondary mt-2 w-full" onClick={() => setReceipt(null)}>{t('common.done')}</button>
         </div>
       )}
 
@@ -211,6 +224,13 @@ export default function CollectHouse() {
           <input value={amount} onChange={(e) => setAmount(e.target.value)}
             type="number" inputMode="decimal" min="1" placeholder="500" className="text-2xl font-bold" />
         </Field>
+        {org?.upi_id && parseFloat(amount) > 0 && (
+          <a href={upiLink({ pa: org.upi_id, pn: org.upi_name || org.name, am: amount, tn: `${org.name}` })}
+            onClick={() => setMode('upi')}
+            className="btn w-full mb-3 font-semibold" style={{ backgroundColor: '#5b2a9e', color: '#fff' }}>
+            💳 {t('collect.payUpi', { amount: fmtINR(parseFloat(amount)) })}
+          </a>
+        )}
         <Field label={t('collect.mode')}>
           <div className="grid grid-cols-3 gap-2">
             {['cash', 'upi', 'bank'].map((m) => (

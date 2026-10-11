@@ -425,7 +425,9 @@
     "noMatch": "No match — add them below to build your register",
     "walkInHint": "No {{unit}} selected — this will be saved as a walk-in. Search above, or ＋ add a {{unit}} to build your register.",
     "assignArea": "Assign to an area",
-    "assignAreaHint": "Important — choose the area this {{unit}} belongs to, so it shows in the right register."
+    "assignAreaHint": "Important — choose the area this {{unit}} belongs to, so it shows in the right register.",
+    "payUpi": "Pay {{amount}} via UPI",
+    "shareReceipt": "Share receipt on WhatsApp"
   },
   "coupons": {
     "title": "Coupons",
@@ -614,6 +616,8 @@
     "clubUnit": "club",
     "discoverable": "Let people find & join this club",
     "discoverableHint": "When on, your club appears in “Find clubs near you”. Turn off to stay private.",
+    "upiId": "Collection UPI ID",
+    "upiHint": "Add your committee's UPI ID so collectors can take payments via GPay / PhonePe and share receipts.",
     "gpsAttached": "Location pinned",
     "gpsRepin": "Re-pin location",
     "gpsLocating": "Getting location…",
